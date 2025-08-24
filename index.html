@@ -1,0 +1,542 @@
+<!--
+Simulación de Panadería (Caso Fijo) — index.html
+Ejercicio fijo: media de llegada 3 min (exponencial) y servicio uniforme [2,4] con 6 clientes.
+-->
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Simulación de Panadería (Caso Fijo)</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root{
+      --bg:#F7F7FB;
+      --card:rgba(255,255,255,.65);
+      --bg-glass:rgba(255,255,255,.55);
+      --text:#1f2937;
+      --muted:#6b7280;
+      --accent-1:#B8E1FF; /* azul pastel */
+      --accent-2:#FFD6E0; /* rosa pastel */
+      --accent-3:#C3F0CA; /* verde pastel */
+      --accent-4:#FFE6A7; /* amarillo pastel */
+      --accent-5:#D9E2FF; /* lavanda suave */
+      --radius:16px;
+      --shadow:0 10px 30px rgba(0,0,0,.08);
+      --shadow-soft:0 6px 18px rgba(0,0,0,.06);
+    }
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{
+      margin:0;
+      font-family:Poppins,system-ui,-apple-system,Segoe UI,Roboto,"Helvetica Neue",Arial,"Noto Sans","Apple Color Emoji","Segoe UI Emoji","Segoe UI Symbol",sans-serif;
+      color:var(--text);
+      background:radial-gradient(1200px 600px at 10% -10%, #EAF6FF 0%, transparent 50%),
+                 radial-gradient(1000px 600px at 110% 0%, #FFF3F3 0%, transparent 60%),
+                 var(--bg);
+      line-height:1.4;
+    }
+
+    .container{max-width:1200px;margin:0 auto;padding:24px 16px 64px}
+    header.hero{
+      position:relative;
+      padding:32px 20px 28px;
+      border-radius:calc(var(--radius) + 8px);
+      background:linear-gradient(135deg, rgba(184,225,255,.45), rgba(255,214,224,.45));
+      box-shadow:var(--shadow);
+      overflow:hidden;
+      isolation:isolate;
+    }
+    .hero h1{margin:0 0 6px;font-weight:700;letter-spacing:.2px}
+    .hero p{margin:0;color:var(--muted)}
+    .badge{
+      display:inline-flex;align-items:center;gap:.5ch;
+      padding:8px 12px;border-radius:999px;font-weight:600;
+      background:var(--accent-5);box-shadow:var(--shadow-soft);font-size:.9rem
+    }
+    .controls{
+      margin-top:16px;display:flex;flex-wrap:wrap;gap:12px;align-items:center
+    }
+    .segmented{
+      display:inline-flex;border-radius:999px;background:var(--bg-glass);
+      backdrop-filter: blur(6px);box-shadow:var(--shadow-soft);overflow:hidden
+    }
+    .segmented input{display:none}
+    .segmented label{
+      padding:10px 14px;cursor:pointer;user-select:none;font-weight:600;color:#374151
+    }
+    .segmented input:checked + label{
+      background:white;border-radius:999px;box-shadow:var(--shadow-soft)
+    }
+    .inputs{
+      display:flex;gap:10px;flex-wrap:wrap;align-items:center
+    }
+    .inputs input[type="text"]{
+      min-width:300px;max-width:520px;width:100%;
+      padding:10px 12px;border-radius:10px;border:1px solid #e5e7eb;
+      background:rgba(255,255,255,.9);box-shadow:var(--shadow-soft)
+    }
+    button.primary{
+      border:0;border-radius:999px;padding:12px 18px;font-weight:700;
+      background:linear-gradient(135deg,var(--accent-3),var(--accent-1));
+      box-shadow:var(--shadow);cursor:pointer;transition:transform .15s ease, filter .2s ease;
+    }
+    button.primary:hover{transform:translateY(-1px)}
+    button.primary:active{transform:translateY(0);filter:brightness(.97)}
+    button.primary:focus{outline:3px solid rgba(30,64,175,.25);outline-offset:2px}
+
+    .grid{
+      display:grid;gap:16px;margin-top:18px;
+      grid-template-columns:repeat(auto-fit,minmax(280px,1fr))
+    }
+    .card{
+      background:var(--card);
+      backdrop-filter: blur(8px);
+      border:1px solid rgba(255,255,255,.6);
+      border-radius:var(--radius);
+      box-shadow:var(--shadow);
+      padding:16px;
+      animation:fadeUp .6s cubic-bezier(.2,.6,.2,1) both;
+    }
+    .card h3{margin:4px 0 10px;font-size:1.05rem}
+    .card p{margin:.25rem 0;color:var(--muted)}
+    .kpi{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+    .kpi .value{
+      font-size:2rem;font-weight:800;letter-spacing:.3px;
+      background:linear-gradient(135deg,var(--accent-4),var(--accent-2));
+      -webkit-background-clip:text;background-clip:text;color:transparent
+    }
+    .chip{
+      display:inline-flex;align-items:center;justify-content:center;
+      padding:6px 10px;border-radius:999px;font-weight:600;
+      background:white;border:1px dashed rgba(0,0,0,.06);
+      box-shadow:var(--shadow-soft);font-size:.9rem
+    }
+    .chips{display:flex;flex-wrap:wrap;gap:8px;margin-top:6px}
+
+    .table-wrap{overflow:auto}
+    table{
+      width:100%;border-collapse:separate;border-spacing:0 8px;min-width:760px
+    }
+    thead th{
+      text-align:left;font-size:.88rem;color:#334155;font-weight:700;padding:10px 12px
+    }
+    tbody td{
+      background:white;padding:10px 12px;border-top:1px solid #eef2f7;border-bottom:1px solid #eef2f7
+    }
+    tbody tr td:first-child{border-left:1px solid #eef2f7;border-top-left-radius:12px;border-bottom-left-radius:12px;font-weight:700}
+    tbody tr td:last-child{border-right:1px solid #eef2f7;border-top-right-radius:12px;border-bottom-right-radius:12px}
+    .num{text-align:right;white-space:nowrap}
+
+    canvas{width:100%;height:160px;display:block}
+    .legend{display:flex;gap:12px;align-items:center;margin-top:8px;color:var(--muted);font-size:.9rem}
+    .legend span{display:inline-flex;align-items:center;gap:6px}
+    .swatch{width:14px;height:10px;border-radius:4px;display:inline-block}
+
+    footer{margin-top:26px;text-align:center;color:var(--muted);font-size:.92rem}
+
+    @keyframes fadeUp{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
+    .hover-up{transition:transform .2s ease, box-shadow .2s ease}
+    .hover-up:hover{transform:translateY(-2px);box-shadow:0 14px 36px rgba(0,0,0,.10)}
+    .sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);border:0}
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header class="hero hover-up" role="banner" aria-label="Encabezado de la simulación">
+      <span class="badge" aria-label="Caso fijo de eventos discretos">Caso fijo • 1 servidor</span>
+      <h1>Simulación de Panadería (Caso Fijo)</h1>
+      <p>Cola de un solo servidor. Llegadas ∼ Exponencial (media 3&nbsp;min) y servicio ∼ Uniforme [2,4]. Simulamos 6 clientes.</p>
+      <div class="controls" role="group" aria-label="Controles de simulación">
+        <div class="segmented" role="radiogroup" aria-label="Modo de U">
+          <input id="modo-manual" name="modo" type="radio" value="manual" checked aria-checked="true" />
+          <label for="modo-manual" tabindex="0">Manual</label>
+          <input id="modo-aleatorio" name="modo" type="radio" value="aleatorio" />
+          <label for="modo-aleatorio" tabindex="0">Aleatorio</label>
+        </div>
+        <div class="inputs" id="manual-inputs">
+          <label class="sr-only" for="uLlegadas">U para llegadas</label>
+          <input id="uLlegadas" type="text" aria-label="U para llegadas (lista separada por comas)" value="0.50,0.60,0.20,0.80,0.70,0.60" />
+          <label class="sr-only" for="uServicio">U para servicio</label>
+          <input id="uServicio" type="text" aria-label="U para servicio (lista separada por comas)" value="0.30,0.80,0.60,0.50,0.20,0.80" />
+        </div>
+        <button id="run" class="primary" aria-label="Ejecutar simulación">Simular</button>
+      </div>
+    </header>
+
+    <section class="grid" aria-label="Tarjetas de resumen y detalle">
+      <article class="card hover-up" aria-label="Parámetros y fórmulas">
+        <h3>Parámetros y fórmulas</h3>
+        <p><strong>Llegadas (Exponencial, media = 3):</strong></p>
+        <div class="chip" aria-label="Fórmula exponencial">T = −λ · ln(U), λ = 3, U ∈ (0,1)</div>
+        <p style="margin-top:8px"><strong>Servicio (Uniforme [2,4]):</strong></p>
+        <div class="chip" aria-label="Fórmula uniforme">S = a + (b − a)·U, a = 2, b = 4</div>
+        <p style="margin-top:10px">Política: <em>FIFO</em>, servidor único. Reglas:<br/>
+          <code>inicio[i] = max(llegada[i], fin[i−1])</code> ·
+          <code>fin[i] = inicio[i] + servicio[i]</code> ·
+          <code>espera[i] = inicio[i] − llegada[i]</code>
+        </p>
+      </article>
+
+      <article class="card hover-up" aria-label="Secuencias U usadas">
+        <h3>Secuencias <span style="font-variant:small-caps">U</span> usadas</h3>
+        <p>Llegadas</p>
+        <div id="chips-ua" class="chips" aria-live="polite"></div>
+        <p style="margin-top:8px">Servicio</p>
+        <div id="chips-us" class="chips" aria-live="polite"></div>
+      </article>
+
+      <article class="card hover-up" aria-label="Resultados numéricos">
+        <h3>Resultados</h3>
+        <div class="kpi">
+          <div>
+            <div class="value" id="avgWait">—</div>
+            <div style="font-size:.95rem;color:#475569">Promedio de espera</div>
+          </div>
+          <div class="chip" id="avgBadge" aria-live="polite" title="Verificación contra el caso fijo">—</div>
+        </div>
+        <p id="maxWait" style="margin-top:8px">Mayor espera: —</p>
+        <p id="avgCalc" style="font-size:.95rem;margin-top:6px;color:#475569">Cálculo: —</p>
+      </article>
+
+      <article class="card hover-up" aria-label="Sparkline de espera">
+        <h3>Espera por cliente (sparkline)</h3>
+        <canvas id="spark" width="720" height="180" role="img" aria-label="Serie de tiempo del tiempo de espera por cliente"></canvas>
+      </article>
+
+      <article class="card hover-up" aria-label="Mini Gantt">
+        <h3>Línea de tiempo / Gantt</h3>
+        <canvas id="gantt" width="720" height="240" role="img" aria-label="Diagrama de barras de inicio/fin de servicio"></canvas>
+        <div class="legend" aria-hidden="true">
+          <span><i class="swatch" style="background:var(--accent-2)"></i> Espera</span>
+          <span><i class="swatch" style="background:var(--accent-1)"></i> Servicio</span>
+        </div>
+      </article>
+
+      <article class="card hover-up" aria-label="Tabla detallada">
+        <h3>Tabla (6 clientes)</h3>
+        <div class="table-wrap">
+          <table aria-describedby="tabla-desc">
+            <caption id="tabla-desc" class="sr-only">Resultados de la simulación para 6 clientes</caption>
+            <thead>
+              <tr>
+                <th>Cliente</th>
+                <th>U llegada</th>
+                <th>U servicio</th>
+                <th class="num">Llegada</th>
+                <th class="num">Servicio</th>
+                <th class="num">Inicio</th>
+                <th class="num">Fin</th>
+                <th class="num">Espera</th>
+              </tr>
+            </thead>
+            <tbody id="tbody"></tbody>
+          </table>
+        </div>
+      </article>
+    </section>
+
+    <footer>Simulación de eventos discretos – Caso fijo (no calculadora)</footer>
+  </div>
+
+  <script>
+  // -------------------- Utilidades --------------------
+  const r2 = x => Math.round((x + Number.EPSILON) * 100) / 100;
+  const fmt = x => `${r2(x).toFixed(2)} min`;
+
+  // Caso fijo (panadería)
+  const defaultUA = [0.50,0.60,0.20,0.80,0.70,0.60]; // U para llegadas (media 3)
+  const defaultUS = [0.30,0.80,0.60,0.50,0.20,0.80]; // U para servicio [2,4]
+  const LAMBDA = 3; // media de llegadas
+  const A = 2, B = 4; // servicio uniforme [2,4]
+
+  function parseUInput(str){
+    return str.split(/[,\s;]+/).filter(Boolean).map(Number).slice(0,6);
+  }
+
+  function chips(container, arr, palette){
+    container.innerHTML = '';
+    const colors = palette || ['#fff','#fff','#fff','#fff','#fff','#fff'];
+    arr.forEach((v,i)=>{
+      const d = document.createElement('span');
+      d.className = 'chip';
+      d.style.background = colors[i % colors.length];
+      d.textContent = (Math.round(v*100)/100).toFixed(2);
+      container.appendChild(d);
+    });
+  }
+
+  // -------------------- Generación de datos --------------------
+  /**
+   * Genera/lee U y calcula variables de la simulación.
+   * @param {'aleatorio'|'manual'} mode
+   * @param {number[]} UA U para llegadas
+   * @param {number[]} US U para servicio
+   */
+  function generateData(mode, UA, US){
+    const n = 6;
+
+    let uA = [], uS = [];
+    if(mode === 'manual'){
+      uA = (UA && UA.length === n) ? UA : defaultUA.slice();
+      uS = (US && US.length === n) ? US : defaultUS.slice();
+    }else{
+      // Aleatorio en [0.1, 0.9]
+      for(let i=0;i<n;i++){
+        uA.push(Number((0.1 + Math.random()*0.8).toFixed(2)));
+        uS.push(Number((0.1 + Math.random()*0.8).toFixed(2)));
+      }
+    }
+
+    // Interarribos: T = -λ ln(U) con λ = 3 (redondeo a 2 decimales)
+    const inter = uA.map(u => r2(-LAMBDA * Math.log(u)));
+
+    // Llegadas acumuladas (sumando interarribos ya redondeados)
+    const llegada = inter.reduce((acc,val,i)=>{
+      if(i===0) acc.push(val);
+      else acc.push(r2(acc[i-1] + val));
+      return acc;
+    },[]);
+
+    // Servicio (Uniforme [2,4]): S = a + (b-a)U = 2 + 2U
+    const servicio = uS.map(u => r2(A + (B - A)*u));
+
+    // Cola de 1 servidor (FIFO)
+    const inicio = []; const fin = []; const espera = [];
+    for(let i=0;i<n;i++){
+      const prevFin = i>0 ? fin[i-1] : 0;
+      inicio[i] = r2(Math.max(llegada[i], prevFin));
+      fin[i]    = r2(inicio[i] + servicio[i]);
+      espera[i] = r2(inicio[i] - llegada[i]);
+    }
+
+    return { uA, uS, inter, llegada, servicio, inicio, fin, espera };
+  }
+
+  // -------------------- Construcción de UI --------------------
+  function buildTable(data){
+    const tb = document.getElementById('tbody');
+    tb.innerHTML = '';
+    for(let i=0;i<6;i++){
+      const tr = document.createElement('tr');
+      const cells = [
+        (i+1),
+        data.uA[i].toFixed(2),
+        data.uS[i].toFixed(2),
+        fmt(data.llegada[i]),
+        fmt(data.servicio[i]),
+        fmt(data.inicio[i]),
+        fmt(data.fin[i]),
+        fmt(data.espera[i])
+      ];
+      cells.forEach((c,idx)=>{
+        const td = document.createElement('td');
+        if(idx>=3) td.className = 'num';
+        td.textContent = c;
+        tr.appendChild(td);
+      });
+      tb.appendChild(tr);
+    }
+  }
+
+  function calcMetrics(data){
+    const n=6;
+    const sum = data.espera.reduce((a,b)=>a+b,0);
+    const avg = r2(sum / n);
+    let max = -Infinity, idx = -1;
+    data.espera.forEach((v,i)=>{ if(v>max){max=v;idx=i;} });
+    return {avg, max, idx};
+  }
+
+  function showMetrics(data){
+    const {avg, max, idx} = calcMetrics(data);
+    document.getElementById('avgWait').textContent = `${avg.toFixed(2)} min`;
+    document.getElementById('maxWait').textContent = `Mayor espera: Cliente ${idx+1} con ${max.toFixed(2)} min`;
+
+    // Mostrar cálculo explícito del promedio
+    const parts = data.espera.map(v=>v.toFixed(2)).join(' + ');
+    document.getElementById('avgCalc').textContent =
+      `Cálculo: (${parts}) / 6 = ${avg.toFixed(2)} min`;
+
+    // Verificación del caso fijo (≈ 2.23 min)
+    const badge = document.getElementById('avgBadge');
+    const isDefault = arraysEqualApprox(data.uA, defaultUA) && arraysEqualApprox(data.uS, defaultUS);
+    if(isDefault && avg >= 2.20 && avg <= 2.26){
+      badge.style.background = 'linear-gradient(135deg, var(--accent-3), var(--accent-4))';
+      badge.textContent = 'Validado: ≈ 2.23 min';
+      badge.setAttribute('aria-label','Promedio validado contra el caso fijo (≈ 2.23 min)');
+    }else{
+      badge.style.background = 'linear-gradient(135deg, var(--accent-2), var(--accent-4))';
+      badge.textContent = 'Promedio calculado';
+      badge.setAttribute('aria-label','Promedio calculado para el caso actual');
+    }
+  }
+
+  function arraysEqualApprox(a,b,eps=1e-9){
+    if(!a || !b || a.length!==b.length) return false;
+    for(let i=0;i<a.length;i++){
+      if(Math.abs(Number(a[i]) - Number(b[i]))>eps) return false;
+    }
+    return true;
+  }
+
+  // -------------------- Gráficos --------------------
+  function drawSparkline(data){
+    const waits = data.espera;
+    const cvs = document.getElementById('spark'), ctx = cvs.getContext('2d');
+    const W = cvs.width, H = cvs.height;
+    ctx.clearRect(0,0,W,H);
+    const pad = 18;
+    const max = Math.max(...waits, 1);
+    const stepX = (W - pad*2) / (waits.length - 1);
+
+    ctx.globalAlpha = .5;
+    ctx.strokeStyle = '#cbd5e1';
+    ctx.beginPath(); ctx.moveTo(pad, H - pad); ctx.lineTo(W - pad, H - pad); ctx.stroke();
+    ctx.globalAlpha = 1;
+
+    ctx.lineWidth = 2.5;
+    ctx.strokeStyle = '#7aa7ff';
+    ctx.beginPath();
+    waits.forEach((v,i)=>{
+      const x = pad + i*stepX;
+      const y = H - pad - (v/max)*(H - pad*2);
+      if(i===0) ctx.moveTo(x,y); else ctx.lineTo(x,y);
+    });
+    ctx.stroke();
+
+    ctx.fillStyle = '#3b82f6';
+    waits.forEach((v,i)=>{
+      const x = pad + i*stepX;
+      const y = H - pad - (v/max)*(H - pad*2);
+      ctx.beginPath(); ctx.arc(x,y,3,0,Math.PI*2); ctx.fill();
+    });
+  }
+
+  function drawGantt(data){
+    const cvs = document.getElementById('gantt'), ctx = cvs.getContext('2d');
+    const W = cvs.width, H = cvs.height;
+    ctx.clearRect(0,0,W,H);
+    const pad = 28;
+    const rows = 6;
+    const rowH = (H - pad*2) / rows;
+    const tMin = 0;
+    const tMax = Math.max(...data.fin);
+    const xScale = (t) => pad + (t - tMin) / (tMax - tMin) * (W - pad*2);
+
+    ctx.strokeStyle = '#e5e7eb'; ctx.lineWidth = 1;
+    for(let g=0; g<=5; g++){
+      const t = tMin + g*(tMax - tMin)/5;
+      const x = xScale(t);
+      ctx.beginPath(); ctx.moveTo(x, pad - 6); ctx.lineTo(x, H - pad + 6); ctx.stroke();
+      ctx.fillStyle = '#9ca3af'; ctx.font = '12px Poppins';
+      ctx.fillText(r2(t).toFixed(2), x-14, H - pad + 18);
+    }
+
+    for(let i=0;i<rows;i++){
+      const y = pad + i*rowH + rowH*0.2;
+      const h = rowH*0.6;
+
+      if(data.espera[i] > 0){
+        const wx1 = xScale(data.llegada[i]);
+        const wx2 = xScale(data.inicio[i]);
+        ctx.fillStyle = '#FFD6E0';
+        roundRect(ctx, wx1, y, wx2 - wx1, h, 6); ctx.fill();
+      }
+
+      const sx1 = xScale(data.inicio[i]);
+      const sx2 = xScale(data.fin[i]);
+      ctx.fillStyle = '#B8E1FF';
+      roundRect(ctx, sx1, y, sx2 - sx1, h, 6); ctx.fill();
+
+      ctx.fillStyle = '#475569'; ctx.font = '12px Poppins';
+      ctx.fillText(`C${i+1}`, 6, y + h - 2);
+    }
+  }
+
+  function roundRect(ctx, x, y, w, h, r){
+    const min = Math.min(w,h); if(r>min/2) r=min/2;
+    ctx.beginPath();
+    ctx.moveTo(x+r,y);
+    ctx.arcTo(x+w,y,x+w,y+h,r);
+    ctx.arcTo(x+w,y+h,x,y+h,r);
+    ctx.arcTo(x,y+h,x,y,r);
+    ctx.arcTo(x,y,x+w,y,r);
+    ctx.closePath();
+  }
+
+  // -------------------- Simulación y eventos --------------------
+  const chipsUA = document.getElementById('chips-ua');
+  const chipsUS = document.getElementById('chips-us');
+
+  function updateChips(uA,uS){
+    chips(chipsUA, uA, ['#fff','#FFFAF0','#fff','#FFFAF0','#fff','#FFFAF0']);
+    chips(chipsUS, uS, ['#fff','#F1FFF5','#fff','#F1FFF5','#fff','#F1FFF5']);
+  }
+
+  function simulate(){
+    const mode = document.querySelector('input[name="modo"]:checked').value;
+    let UA, US;
+    if(mode==='manual'){
+      UA = parseUInput(document.getElementById('uLlegadas').value);
+      US = parseUInput(document.getElementById('uServicio').value);
+    }
+    const data = generateData(mode, UA, US);
+
+    updateChips(data.uA, data.uS);
+    buildTable(data);
+    showMetrics(data);
+    drawSparkline(data);
+    drawGantt(data);
+
+    runAsserts(data);
+    document.getElementById('avgBadge').setAttribute('aria-live','assertive');
+  }
+
+  function runAsserts(data){
+    try{
+      console.assert(data.uA.length===6 && data.uS.length===6, 'Las secuencias U deben tener longitud 6.');
+      const allNums = [...data.uA, ...data.uS, ...data.llegada, ...data.servicio, ...data.inicio, ...data.fin, ...data.espera];
+      console.assert(allNums.every(v => Number.isFinite(v) && !Number.isNaN(v)), 'No debe haber NaN en los cálculos.');
+
+      const isDefault = arraysEqualApprox(data.uA, defaultUA) && arraysEqualApprox(data.uS, defaultUS);
+      if(isDefault){
+        const avg = calcMetrics(data).avg;
+        console.assert(avg >= 2.20 && avg <= 2.26, `El promedio de espera (${avg}) debe estar en ~2.23 min para el caso fijo.`);
+      }else{
+        console.info('Prueba de rango de promedio omitida (modo no es el caso fijo).');
+      }
+    }catch(e){
+      console.error(e);
+    }
+  }
+
+  document.getElementById('modo-aleatorio').addEventListener('change', e=>{
+    document.getElementById('manual-inputs').hidden = true;
+  });
+  document.getElementById('modo-manual').addEventListener('change', e=>{
+    document.getElementById('manual-inputs').hidden = false;
+    document.getElementById('uLlegadas').focus();
+  });
+
+  document.querySelectorAll('.segmented label').forEach(lbl=>{
+    lbl.addEventListener('keydown', (ev)=>{
+      if(ev.key==='Enter' || ev.key===' '){
+        const forId = lbl.getAttribute('for');
+        const input = document.getElementById(forId);
+        input.checked = true;
+        input.dispatchEvent(new Event('change'));
+        ev.preventDefault();
+      }
+    });
+  });
+
+  document.getElementById('run').addEventListener('click', simulate);
+
+  // Primera corrida (modo Manual con el caso fijo)
+  simulate();
+
+  </script>
+</body>
+</html>
