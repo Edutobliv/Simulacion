@@ -1,7 +1,6 @@
 <!--
 Simulación de Panadería (Caso Fijo) — index.html
 Caso fijo: media de llegada 3 min (exponencial) y servicio uniforme [2,4] con 6 clientes.
-Incluye animación de carga inicial (loader) y dashboard responsive con tarjetas grandes abajo.
 -->
 <!DOCTYPE html>
 <html lang="es">
@@ -9,8 +8,17 @@ Incluye animación de carga inicial (loader) y dashboard responsive con tarjetas
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Simulación de Panadería (Caso Fijo)</title>
+
+  <!-- CSP básica -->
+  <meta http-equiv="Content-Security-Policy"
+        content="default-src 'self';
+                 img-src 'self' data:;
+                 style-src 'self' 'unsafe-inline' https://fonts.googleapis.com;
+                 font-src https://fonts.gstatic.com;
+                 script-src 'self' 'unsafe-inline'">
+
   <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 
   <style>
     :root{
@@ -19,11 +27,11 @@ Incluye animación de carga inicial (loader) y dashboard responsive con tarjetas
       --bg-glass:rgba(255,255,255,.55);
       --text:#1f2937;
       --muted:#6b7280;
-      --accent-1:#B8E1FF; /* azul pastel */
-      --accent-2:#FFD6E0; /* rosa pastel */
-      --accent-3:#C3F0CA; /* verde pastel */
-      --accent-4:#FFE6A7; /* amarillo pastel */
-      --accent-5:#D9E2FF; /* lavanda suave */
+      --accent-1:#B8E1FF;
+      --accent-2:#FFD6E0;
+      --accent-3:#C3F0CA;
+      --accent-4:#FFE6A7;
+      --accent-5:#D9E2FF;
       --radius:16px;
       --shadow:0 10px 30px rgba(0,0,0,.08);
       --shadow-soft:0 6px 18px rgba(0,0,0,.06);
@@ -40,217 +48,191 @@ Incluye animación de carga inicial (loader) y dashboard responsive con tarjetas
       line-height:1.4;
     }
 
-    /* ---------- Loader (pantalla de carga) ---------- */
-    #loader{
-      position:fixed; inset:0;
-      display:flex; align-items:center; justify-content:center; flex-direction:column;
+    /* Loader */
+    #loader{position:fixed; inset:0;display:flex;align-items:center;justify-content:center;flex-direction:column;
       background:linear-gradient(135deg, rgba(184,225,255,.9), rgba(255,214,224,.9));
-      backdrop-filter: blur(6px);
-      z-index:9999;
-      transition:opacity .6s ease, visibility .6s ease;
-    }
-    #loader.hidden{opacity:0; visibility:hidden}
-    .spinner{
-      width:72px;height:72px;border-radius:50%;
-      border:6px solid rgba(255,255,255,.6); border-top-color:#1f2937;
-      animation:spin 1s linear infinite;
-      box-shadow:var(--shadow);
-    }
-    #loader h1{
-      margin:18px 0 0; font-weight:800; letter-spacing:.3px;
-      color:#1f2937; text-align:center;
-      animation:fadeInUp .8s ease both; animation-delay:.3s;
-    }
-    #loader p{
-      margin:6px 0 0; color:#374151; opacity:.85;
-      animation:fadeInUp .8s ease both; animation-delay:.5s;
-    }
+      backdrop-filter: blur(6px);z-index:9999;transition:opacity .6s ease, visibility .6s ease;}
+    #loader.hidden{opacity:0;visibility:hidden}
+    .spinner{width:72px;height:72px;border-radius:50%;border:6px solid rgba(255,255,255,.6);border-top-color:#1f2937;
+      animation:spin 1s linear infinite;box-shadow:var(--shadow);}
+    #loader h1{margin:18px 0 0;font-weight:800;color:#1f2937;text-align:center}
+    #loader p{margin:6px 0 0;color:#374151;opacity:.85}
     @keyframes spin{to{transform:rotate(360deg)}}
-    @keyframes fadeInUp{from{opacity:0; transform:translateY(8px)} to{opacity:1; transform:translateY(0)}}
-    @keyframes fadeUp{from{opacity:0; transform:translateY(6px)} to{opacity:1; transform:translateY(0)}}
 
-    /* ---------- Layout y tarjetas ---------- */
     .container{max-width:1200px;margin:0 auto;padding:24px 16px 64px;opacity:0;transform:scale(.985);transition:opacity .6s ease, transform .6s ease}
     .container.ready{opacity:1; transform:scale(1)}
-    header.hero{
-      position:relative;
-      padding:32px 20px 28px;
-      border-radius:calc(var(--radius) + 8px);
+    header.hero{padding:32px 20px 28px;border-radius:calc(var(--radius) + 8px);
       background:linear-gradient(135deg, rgba(184,225,255,.45), rgba(255,214,224,.45));
-      box-shadow:var(--shadow);
-      overflow:hidden;
-      isolation:isolate;
-      animation:fadeUp .6s ease both;
-    }
-    .hero h1{margin:0 0 6px;font-weight:700;letter-spacing:.2px}
-    .hero p{margin:0;color:var(--muted)}
-    .badge{
-      display:inline-flex;align-items:center;gap:.5ch;
-      padding:8px 12px;border-radius:999px;font-weight:600;
-      background:var(--accent-5);box-shadow:var(--shadow-soft);font-size:.9rem
-    }
-    .callout{
-      margin-top:10px;
-      background:rgba(255,255,255,.72);
-      border:1px dashed rgba(0,0,0,.06);
-      border-radius:12px;
-      padding:12px 14px;
-      box-shadow:var(--shadow-soft);
-      font-size:.98rem;
-      animation:fadeUp .6s ease both; animation-delay:.06s;
-    }
-    .controls{
-      margin-top:14px;display:flex;flex-wrap:wrap;gap:12px;align-items:flex-end
-    }
-    .segmented{
-      display:inline-flex;border-radius:999px;background:var(--bg-glass);
-      backdrop-filter: blur(6px);box-shadow:var(--shadow-soft);overflow:hidden
-    }
+      box-shadow:var(--shadow);}
+    .badge{display:inline-flex;align-items:center;gap:.5ch;padding:8px 12px;border-radius:999px;font-weight:600;
+      background:var(--accent-5);box-shadow:var(--shadow-soft);font-size:.9rem}
+    .callout{margin-top:10px;background:rgba(255,255,255,.72);border:1px dashed rgba(0,0,0,.06);
+      border-radius:12px;padding:12px 14px;box-shadow:var(--shadow-soft);font-size:.98rem}
+
+    .controls{margin-top:14px;display:flex;flex-wrap:wrap;gap:12px;align-items:flex-end}
+    .segmented{display:inline-flex;border-radius:999px;background:var(--bg-glass);box-shadow:var(--shadow-soft);overflow:hidden}
     .segmented input{display:none}
-    .segmented label{
-      padding:10px 14px;cursor:pointer;user-select:none;font-weight:600;color:#374151
-    }
-    .segmented input:checked + label{
-      background:white;border-radius:999px;box-shadow:var(--shadow-soft)
-    }
-    .inputs{
-      display:flex;gap:12px;flex-wrap:wrap;align-items:flex-end
-    }
-    .field{display:flex;flex-direction:column;gap:6px;min-width:300px}
+    .segmented label{padding:10px 14px;cursor:pointer;font-weight:600;color:#374151}
+    .segmented input:checked + label{background:white;border-radius:999px;box-shadow:var(--shadow-soft)}
+    .inputs{display:flex;gap:12px;flex-wrap:wrap;align-items:flex-end}
+    .field{display:flex;flex-direction:column;gap:6px;min-width:280px}
     .field label{font-size:.9rem;font-weight:600;color:#374151}
     .hint{font-size:.8rem;color:#6b7280}
-    .inputs input[type="text"]{
-      min-width:300px;max-width:520px;width:100%;
-      padding:10px 12px;border-radius:10px;border:1px solid #e5e7eb;
-      background:rgba(255,255,255,.9);box-shadow:var(--shadow-soft)
-    }
-    button.primary{
-      border:0;border-radius:999px;padding:12px 18px;font-weight:700;
+    .inputs input[type="text"]{min-width:260px;max-width:520px;width:100%;padding:10px 12px;border-radius:10px;
+      border:1px solid #e5e7eb;background:rgba(255,255,255,.9);box-shadow:var(--shadow-soft)}
+    button.primary{border:0;border-radius:999px;padding:12px 18px;font-weight:700;
       background:linear-gradient(135deg,var(--accent-3),var(--accent-1));
-      box-shadow:var(--shadow);cursor:pointer;transition:transform .15s ease, filter .2s ease;
-    }
+      box-shadow:var(--shadow);cursor:pointer}
     button.primary:hover{transform:translateY(-1px)}
-    button.primary:active{transform:translateY(0);filter:brightness(.97)}
-    button.primary:focus{outline:3px solid rgba(30,64,175,.25);outline-offset:2px}
 
-    /* Top: tarjetas pequeñas */
-    .grid-top{
-      display:grid;gap:16px;margin-top:18px;
-      grid-template-columns:repeat(auto-fit,minmax(280px,1fr))
-    }
+    .grid-top{display:grid;gap:16px;margin-top:18px;grid-template-columns:repeat(auto-fit,minmax(280px,1fr))}
 
-    /* Bottom: tarjetas grandes (Gantt + Tabla) */
+    /* === Grid inferior: mismas dimensiones para Gantt y Tabla === */
     .grid-bottom{
-      display:grid;gap:16px;margin-top:18px;
-      grid-template-columns:1fr;
+      display:grid;
+      gap:16px;
+      margin-top:18px;
+      grid-template-columns:1fr; /* móvil: 1 col */
     }
-    @media (min-width: 900px){
-      .grid-bottom{grid-template-columns:1fr 1.1fr}
+    @media (min-width:900px){
+      .grid-bottom{ grid-template-columns:minmax(0,1fr) minmax(0,1fr); } /* columnas iguales */
     }
+    /* Permite que el contenido pueda encogerse dentro de cada card */
+    .grid-bottom > .card{ min-width:0; }
 
-    .card{
-      background:var(--card);
-      backdrop-filter: blur(8px);
-      border:1px solid rgba(255,255,255,.6);
-      border-radius:var(--radius);
-      box-shadow:var(--shadow);
-      padding:16px;
-      animation:fadeUp .6s cubic-bezier(.2,.6,.2,1) both;
-    }
-    .card h3{margin:4px 0 10px;font-size:1.05rem}
-    .card p{margin:.25rem 0;color:var(--muted)}
-    .card.tall{min-height:440px;padding:18px}
-    .card.tall h3{font-size:1.15rem}
+    /* Tarjetas “altas” con layout vertical y alturas coordinadas */
+    .card{background:var(--card);backdrop-filter:blur(8px);border:1px solid rgba(255,255,255,.6);
+      border-radius:var(--radius);box-shadow:var(--shadow);padding:16px}
+    .card.tall{display:flex;flex-direction:column;min-height:420px;padding:18px}
+    .grid-bottom .card.tall h3{ margin:4px 0 10px; }
 
-    .kpi{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
-    .kpi .value{
-      font-size:2rem;font-weight:800;letter-spacing:.3px;
-      background:linear-gradient(135deg,var(--accent-4),var(--accent-2));
-      -webkit-background-clip:text;background-clip:text;color:transparent
-    }
-    .chip{
-      display:inline-flex;align-items:center;justify-content:center;
-      padding:6px 10px;border-radius:999px;font-weight:600;
-      background:white;border:1px dashed rgba(0,0,0,.06);
-      box-shadow:var(--shadow-soft);font-size:.9rem
-    }
-    .chips{display:flex;flex-wrap:wrap;gap:8px;margin-top:6px}
-
-    .table-wrap{overflow:auto}
-    table{
-      width:100%;border-collapse:separate;border-spacing:0 10px;min-width:820px
-    }
-    thead th{
-      position:sticky;top:0;background:#f9fafb;
-      text-align:left;font-size:.95rem;color:#334155;font-weight:700;padding:12px 14px;z-index:1
-    }
-    tbody td{
-      background:white;padding:14px 14px;border-top:1px solid #eef2f7;border-bottom:1px solid #eef2f7;
-      font-size:1rem
-    }
-    tbody tr td:first-child{border-left:1px solid #eef2f7;border-top-left-radius:14px;border-bottom-left-radius:14px;font-weight:700}
-    tbody tr td:last-child{border-right:1px solid #eef2f7;border-top-right-radius:14px;border-bottom-right-radius:14px}
-    .num{text-align:right;white-space:nowrap}
-
-    /* Canvases */
+    /* Canvas base */
     canvas{width:100%;display:block}
     #spark{height:220px}
-    #gantt{height:340px}
-    .legend{display:flex;gap:12px;align-items:center;margin-top:8px;color:var(--muted);font-size:.95rem}
-    .legend span{display:inline-flex;align-items:center;gap:6px}
-    .swatch{width:14px;height:10px;border-radius:4px;display:inline-block}
+    #hist{height:220px}
 
-    footer{margin-top:26px;text-align:center;color:var(--muted);font-size:.92rem}
+    /* Gantt ocupa todo el alto de su tarjeta */
+    #gantt{ flex:1; height:auto; min-height:280px; }
 
-    .hover-up{transition:transform .2s ease, box-shadow .2s ease}
-    .hover-up:hover{transform:translateY(-2px);box-shadow:0 14px 36px rgba(0,0,0,.10)}
-    .sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);border:0}
+    /* Tabla scrollable ocupa todo el alto de su tarjeta */
+    .table-wrap{ flex:1; min-height:0; overflow:auto }
+
+    .kpi .value{font-size:2rem;font-weight:800;background:linear-gradient(135deg,var(--accent-4),var(--accent-2));
+      -webkit-background-clip:text;background-clip:text;color:transparent}
+
+    .chips{display:flex;flex-wrap:wrap;gap:8px;margin-top:6px}
+    .chip{padding:6px 10px;border-radius:999px;font-weight:600;background:white;border:1px dashed rgba(0,0,0,.06);
+      box-shadow:var(--shadow-soft);font-size:.9rem}
+
+    footer{margin-top:26px;text-align:center;color:#6b7280;font-size:.92rem}
+
+    /* Toast */
+    #toast{position:fixed;right:16px;bottom:16px;max-width: min(92vw, 460px);
+      background:#111827;color:#fff;padding:12px 14px;border-radius:12px;
+      box-shadow:var(--shadow);opacity:0;transform:translateY(8px);
+      transition:opacity .25s ease, transform .25s ease;z-index:10000}
+    #toast.show{opacity:1;transform:translateY(0)}
+
+    /* ---- Tabla mejorada ---- */
+    .table-wrap table{
+      width:100%;
+      min-width:860px;
+      border-collapse:separate;
+      border-spacing:0 10px; /* espacio entre filas tipo “chips” */
+    }
+    .table-wrap thead th{
+      position:sticky; top:0;
+      background:#f8fafc;
+      padding:12px 14px;
+      font-weight:700;
+      color:#334155;
+      text-align:left;
+      z-index:1;
+      border-bottom:1px solid #e5e7eb;
+    }
+    .table-wrap tbody td{
+      background:#ffffff;
+      padding:14px 14px;
+      border-top:1px solid #eef2f7;
+      border-bottom:1px solid #eef2f7;
+      font-size:1rem;
+      line-height:1.2;
+      transition:background .2s ease, box-shadow .2s ease, transform .2s ease;
+    }
+    .table-wrap tbody tr td:first-child{
+      border-left:1px solid #eef2f7;
+      border-top-left-radius:14px;
+      border-bottom-left-radius:14px;
+      font-weight:700;
+    }
+    .table-wrap tbody tr td:last-child{
+      border-right:1px solid #eef2f7;
+      border-top-right-radius:14px;
+      border-bottom-right-radius:14px;
+    }
+    .table-wrap tbody tr:hover td{
+      background:#f9fbff;
+      box-shadow:0 6px 18px rgba(15,23,42,.06);
+      transform:translateY(-1px);
+    }
+    .table-wrap td.num{ text-align:right; white-space:nowrap }
+    .cell-num{ display:inline-flex; gap:6px; align-items:baseline }
+    .cell-num .v{ font-variant-numeric:tabular-nums }
+    .cell-num .u{ font-size:.85em; color:#6b7280 }
+    @media (max-width: 560px){
+      .table-wrap thead th:nth-child(3),
+      .table-wrap tbody td:nth-child(3){ display:none }
+    }
+
+    /* Pequeños estilos para la leyenda del histograma */
+    .legend .swatch{
+      display:inline-block; width:12px; height:12px; border-radius:3px;
+      margin-right:6px; vertical-align:middle;
+      box-shadow:inset 0 0 0 1px rgba(0,0,0,.06);
+    }
   </style>
 </head>
 <body>
   <!-- LOADER -->
-  <div id="loader" aria-live="polite" aria-label="Cargando simulación">
+  <div id="loader">
     <div class="spinner" aria-hidden="true"></div>
     <h1>Simulación de Panadería</h1>
     <p>Preparando dashboard…</p>
   </div>
 
   <div class="container" id="app">
-    <header class="hero hover-up" role="banner" aria-label="Encabezado de la simulación">
-      <span class="badge" aria-label="Caso fijo de eventos discretos">Integrantes: Maria Olivero Mahecha - Samuel Esteban Villalba Duran</span>
+    <header class="hero">
+      <span class="badge">Integrantes: Maria Olivero Mahecha - Samuel Esteban Villalba Duran</span>
       <h1>Simulación de Panadería (Caso Fijo)</h1>
       <p>Cola de un solo servidor. Llegadas ∼ Exponencial (media 3&nbsp;min) y servicio ∼ Uniforme [2,4]. Simulamos 6 clientes.</p>
-      <div class="callout" aria-label="Enunciado del ejercicio">
+      <div class="callout">
         <strong>Enunciado.</strong> En una panadería los clientes llegan de media cada <strong>3&nbsp;min</strong>.
         El tiempo de servicio está entre <strong>2 y 4&nbsp;min</strong> por cliente (uniforme).
         Con <strong>6 clientes de referencia</strong>, determine el <strong>promedio de espera</strong>.
       </div>
 
-      <div class="controls" role="group" aria-label="Controles de simulación">
-        <div class="segmented" role="radiogroup" aria-label="Modo de U">
-          <input id="modo-manual" name="modo" type="radio" value="manual" checked aria-checked="true" />
-          <label for="modo-manual" tabindex="0">Manual</label>
-        <input id="modo-aleatorio" name="modo" type="radio" value="aleatorio" />
-          <label for="modo-aleatorio" tabindex="0">Aleatorio</label>
+      <div class="controls">
+        <div class="segmented" role="radiogroup" aria-label="Modo de simulación">
+          <input id="modo-manual" name="modo" type="radio" value="manual" checked />
+          <label for="modo-manual">Manual</label>
+          <input id="modo-aleatorio" name="modo" type="radio" value="aleatorio" />
+          <label for="modo-aleatorio">Aleatorio</label>
         </div>
 
-        <div class="inputs" id="manual-inputs">
+        <div class="inputs" id="manual-inputs" aria-live="polite">
           <div class="field">
             <label for="uLlegadas">U <em>(llegadas)</em> — Exponencial (media 3&nbsp;min)</label>
             <input id="uLlegadas" type="text"
-              placeholder="U de llegadas (6 valores, ej.: 0.50,0.60,0.20,0.80,0.70,0.60)"
-              aria-label="U para llegadas (lista separada por comas)"
+              placeholder="6 valores entre 0 y 1, separados por coma"
               value="0.50,0.60,0.20,0.80,0.70,0.60" />
-            <span class="hint">Se usan para calcular interarribos: <code>T = −3·ln(U)</code>.</span>
+            <div class="hint">Ej.: 0.42,0.75,0.31,0.18,0.92,0.56</div>
           </div>
-
           <div class="field">
             <label for="uServicio">U <em>(servicio)</em> — Uniforme [2,4]</label>
             <input id="uServicio" type="text"
-              placeholder="U de servicio (6 valores, ej.: 0.30,0.80,0.60,0.50,0.20,0.80)"
-              aria-label="U para servicio (lista separada por comas)"
+              placeholder="6 valores entre 0 y 1, separados por coma"
               value="0.30,0.80,0.60,0.50,0.20,0.80" />
-            <span class="hint">Se usan para calcular: <code>S = 2 + (4 − 2)·U = 2 + 2U</code>.</span>
+            <div class="hint">Ej.: 0.42,0.75,0.31,0.18,0.92,0.56</div>
           </div>
         </div>
 
@@ -258,131 +240,161 @@ Incluye animación de carga inicial (loader) y dashboard responsive con tarjetas
       </div>
     </header>
 
-    <!-- Tarjetas superiores -->
-    <section class="grid-top" aria-label="Tarjetas de resumen">
-      <article class="card hover-up" aria-label="Parámetros y fórmulas">
-        <h3>Parámetros y fórmulas</h3>
-        <p><strong>Llegadas (Exponencial, media = 3):</strong></p>
-        <div class="chip" aria-label="Fórmula exponencial">T = −λ · ln(U), λ = 3, U ∈ (0,1)</div>
-        <p style="margin-top:8px"><strong>Servicio (Uniforme [2,4]):</strong></p>
-        <div class="chip" aria-label="Fórmula uniforme">S = a + (b − a)·U, a = 2, b = 4</div>
-        <p style="margin-top:10px">Política: <em>FIFO</em>, servidor único. Reglas:<br/>
-          <code>inicio[i] = max(llegada[i], fin[i−1])</code> ·
-          <code>fin[i] = inicio[i] + servicio[i]</code> ·
-          <code>espera[i] = inicio[i] − llegada[i]</code>
-        </p>
-      </article>
-
-      <article class="card hover-up" aria-label="Secuencias U usadas">
-        <h3>Secuencias <span style="font-variant:small-caps">U</span> usadas</h3>
-        <p>Llegadas</p>
-        <div id="chips-ua" class="chips" aria-live="polite"></div>
-        <p style="margin-top:8px">Servicio</p>
-        <div id="chips-us" class="chips" aria-live="polite"></div>
-      </article>
-
-      <article class="card hover-up" aria-label="Resultados numéricos">
-        <h3>Resultados</h3>
+    <!-- Resumen -->
+    <section class="grid-top">
+      <article class="card" aria-labelledby="res-h3">
+        <h3 id="res-h3">Resultados</h3>
         <div class="kpi">
-          <div>
-            <div class="value" id="avgWait">—</div>
-            <div style="font-size:.95rem;color:#475569">Promedio de espera</div>
-          </div>
-          <div class="chip" id="avgBadge" aria-live="polite" title="Verificación contra el caso fijo">—</div>
+          <div class="value" id="avgWait" tabindex="-1" aria-live="polite">—</div>
         </div>
-        <p id="maxWait" style="margin-top:8px">Mayor espera: —</p>
-        <p id="avgCalc" style="font-size:.95rem;margin-top:6px;color:#475569">Cálculo: —</p>
+        <p id="maxWait">Mayor espera: —</p>
+        <p id="avgCalc">Cálculo: —</p>
       </article>
-
-      <article class="card hover-up" aria-label="Sparkline de espera">
-        <h3>Espera por cliente (sparkline)</h3>
-        <canvas id="spark" width="720" height="220" role="img" aria-label="Serie de tiempo del tiempo de espera por cliente"></canvas>
+      <article class="card">
+        <h3>Secuencias U</h3>
+        <p>Llegadas</p><div id="chips-ua" class="chips" aria-label="Secuencia U llegadas"></div>
+        <p>Servicio</p><div id="chips-us" class="chips" aria-label="Secuencia U servicio"></div>
+      </article>
+      <article class="card">
+        <h3>Sparkline espera</h3>
+        <canvas id="spark" aria-label="Evolución de las esperas"></canvas>
       </article>
     </section>
 
-    <!-- Tarjetas inferiores (grandes) -->
-    <section class="grid-bottom" aria-label="Detalle ampliado (Gantt y Tabla)">
-      <article class="card tall hover-up" aria-label="Mini Gantt">
-        <h3>Línea de tiempo / Gantt</h3>
-        <canvas id="gantt" width="720" height="340" role="img" aria-label="Diagrama de barras de inicio/fin de servicio"></canvas>
-        <div class="legend" aria-hidden="true">
-          <span><i class="swatch" style="background:var(--accent-2)"></i> Espera</span>
-          <span><i class="swatch" style="background:var(--accent-1)"></i> Servicio</span>
-        </div>
+    <!-- Detalle -->
+    <section class="grid-bottom">
+      <article class="card tall" aria-labelledby="gantt-h3">
+        <h3 id="gantt-h3">Línea de tiempo / Gantt</h3>
+        <canvas id="gantt" aria-label="Diagrama de Gantt: espera y servicio por cliente"></canvas>
       </article>
-
-      <article class="card tall hover-up table-card" aria-label="Tabla detallada">
-        <h3>Tabla (6 clientes)</h3>
+      <article class="card tall" aria-labelledby="tabla-h3">
+        <h3 id="tabla-h3">Tabla</h3>
         <div class="table-wrap">
-          <table aria-describedby="tabla-desc">
-            <caption id="tabla-desc" class="sr-only">Resultados de la simulación para 6 clientes</caption>
-            <thead>
-              <tr>
-                <th>Cliente</th>
-                <th>U llegada</th>
-                <th>U servicio</th>
-                <th class="num">Llegada</th>
-                <th class="num">Servicio</th>
-                <th class="num">Inicio</th>
-                <th class="num">Fin</th>
-                <th class="num">Espera</th>
-              </tr>
-            </thead>
+          <table aria-describedby="tabla-h3">
+            <thead><tr>
+              <th>Cliente</th><th>U llegada</th><th>U servicio</th>
+              <th>Llegada</th><th>Servicio</th><th>Inicio</th><th>Fin</th><th>Espera</th>
+            </tr></thead>
             <tbody id="tbody"></tbody>
           </table>
         </div>
       </article>
     </section>
 
-    <footer>Simulación de eventos discretos – Caso fijo (no calculadora)</footer>
+    <!-- Monte Carlo -->
+    <section class="grid-top">
+      <article class="card">
+        <h3>Monte Carlo</h3>
+
+        <!-- Letreros simples -->
+        <div style="display:grid;gap:6px;margin-bottom:10px;font-size:.92rem;color:#374151">
+          <div><strong>Media</strong> = <em>tendencia central</em> (qué esperar en promedio).</div>
+          <div><strong>DE</strong> = <em>dispersión</em> (qué tan estables o variables son los resultados).</div>
+          <div><strong>Histograma</strong> = <em>foto completa</em> de la distribución.</div>
+        </div>
+
+        <div class="inputs">
+          <div class="field">
+            <label for="replicas">Réplicas k</label>
+            <input id="replicas" type="text" value="200" inputmode="numeric" />
+            <div class="hint">Entero entre 10 y 10000 (por defecto 200)</div>
+          </div>
+          <button id="runMC" class="primary">Ejecutar Monte Carlo</button>
+        </div>
+
+        <!-- Estadísticos -->
+        <div class="chip" id="mcStats" aria-live="polite">—</div>
+
+        <!-- Histograma -->
+        <div style="margin-top:8px">
+          <canvas id="hist" aria-label="Histograma de promedios de espera"></canvas>
+          <div class="legend" style="display:flex;gap:12px;align-items:center;margin-top:8px;color:#6b7280;font-size:.9rem">
+            <span><i class="swatch" style="background:#B8E1FF"></i> Frecuencia</span>
+            <span><i class="swatch" style="background:rgba(34,197,94,.25)"></i> Banda Media ± DE</span>
+            <span><i class="swatch" style="background:#ef4444"></i> Media</span>
+            <span><i class="swatch" style="background:#7dd3fc"></i> Curva suave</span>
+          </div>
+        </div>
+      </article>
+    </section>
+
+    <footer>Simulación de eventos discretos – Caso fijo</footer>
   </div>
 
-  <script>
+  <!-- Toast -->
+  <div id="toast" role="status" aria-live="polite"></div>
+
+  <script defer>
   // -------------------- Utilidades --------------------
-  const r2 = x => Math.round((x + Number.EPSILON) * 100) / 100;
-  const fmt = x => `${r2(x).toFixed(2)} min`;
+  const nf = new Intl.NumberFormat('es-ES',{minimumFractionDigits:2, maximumFractionDigits:2});
+  const r2 = x => Math.round((Number(x) + Number.EPSILON) * 100) / 100;
+  const fmt = x => `${nf.format(r2(x))} min`;
+  const clampU = u => Math.min(1 - 1e-9, Math.max(1e-9, u));
+  const N = 6;
 
   // Caso fijo (panadería)
-  const defaultUA = [0.50,0.60,0.20,0.80,0.70,0.60]; // U para llegadas (media 3)
-  const defaultUS = [0.30,0.80,0.60,0.50,0.20,0.80]; // U para servicio [2,4]
+  const defaultUA = [0.50,0.60,0.20,0.80,0.70,0.60];
+  const defaultUS = [0.30,0.80,0.60,0.50,0.20,0.80];
   const LAMBDA = 3; // media de llegadas
   const A = 2, B = 4; // servicio uniforme [2,4]
 
-  let lastData = null; // para redibujar en resize sin recalcular
+  let lastData = null;
   let loadStarted = performance.now();
 
+  // Toast
+  const toastEl = document.getElementById('toast');
+  let toastTimer = null;
+  function showToast(msg, ms=3500){
+    toastEl.textContent = msg;
+    toastEl.classList.add('show');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(()=> toastEl.classList.remove('show'), ms);
+  }
+
   function parseUInput(str){
-    return str.split(/[,\s;]+/).filter(Boolean).map(Number).slice(0,6);
+    if(typeof str !== 'string' || !str.trim()) {
+      throw new Error(`Ingresa ${N} valores entre 0 y 1 separados por coma.`);
+    }
+    const vals = str.split(/[,\s;]+/).filter(Boolean).map(Number);
+    if(vals.length !== N || vals.some(v=>!Number.isFinite(v))) {
+      throw new Error(`Se esperan exactamente ${N} números válidos separados por comas o espacios.`);
+    }
+    if(vals.some(v=>v<=0 || v>=1)){
+      showToast('Algunos U están fuera de (0,1). Se recortarán automáticamente.');
+    }
+    return vals.slice(0,N).map(clampU);
   }
 
   function chips(container, arr, palette){
     container.innerHTML = '';
-    const colors = palette || ['#fff','#fff','#fff','#fff','#fff','#fff'];
+    const colors = palette || Array(N).fill('#fff');
     arr.forEach((v,i)=>{
       const d = document.createElement('span');
       d.className = 'chip';
       d.style.background = colors[i % colors.length];
-      d.textContent = (Math.round(v*100)/100).toFixed(2);
+      d.textContent = nf.format(Math.round(v*100)/100);
       container.appendChild(d);
     });
   }
 
   // -------------------- Generación de datos --------------------
   function generateData(mode, UA, US){
-    const n = 6;
     let uA = [], uS = [];
     if(mode === 'manual'){
-      uA = (UA && UA.length === n) ? UA : defaultUA.slice();
-      uS = (US && US.length === n) ? US : defaultUS.slice();
+      uA = (UA && UA.length === N) ? UA : defaultUA.slice();
+      uS = (US && US.length === N) ? US : defaultUS.slice();
     }else{
       // Aleatorio en [0.1, 0.9]
-      for(let i=0;i<n;i++){
-        uA.push(Number((0.1 + Math.random()*0.8).toFixed(2)));
-        uS.push(Number((0.1 + Math.random()*0.8).toFixed(2)));
+      for(let i=0;i<N;i++){
+        const a = 0.1 + Math.random()*0.8;
+        const b = 0.1 + Math.random()*0.8;
+        uA.push(Number(a.toFixed(2)));
+        uS.push(Number(b.toFixed(2)));
       }
+      uA = uA.map(clampU); uS = uS.map(clampU);
     }
 
-    // Interarribos: T = -λ ln(U) con λ = 3 (redondeo a 2 decimales)
+    // Interarribos: T = -λ ln(U)
     const inter = uA.map(u => r2(-LAMBDA * Math.log(u)));
 
     // Llegadas acumuladas
@@ -395,9 +407,9 @@ Incluye animación de carga inicial (loader) y dashboard responsive con tarjetas
     // Servicio (Uniforme [2,4]): S = 2 + 2U
     const servicio = uS.map(u => r2(A + (B - A)*u));
 
-    // Cola de 1 servidor (FIFO)
+    // FIFO 1 servidor
     const inicio = []; const fin = []; const espera = [];
-    for(let i=0;i<n;i++){
+    for(let i=0;i<N;i++){
       const prevFin = i>0 ? fin[i-1] : 0;
       inicio[i] = r2(Math.max(llegada[i], prevFin));
       fin[i]    = r2(inicio[i] + servicio[i]);
@@ -411,22 +423,26 @@ Incluye animación de carga inicial (loader) y dashboard responsive con tarjetas
   function buildTable(data){
     const tb = document.getElementById('tbody');
     tb.innerHTML = '';
-    for(let i=0;i<6;i++){
+
+    const numCell = (x) =>
+      `<span class="cell-num"><span class="v">${nf.format(r2(x))}</span><span class="u">min</span></span>`;
+
+    for(let i=0;i<N;i++){
       const tr = document.createElement('tr');
-      const cells = [
-        (i+1),
-        data.uA[i].toFixed(2),
-        data.uS[i].toFixed(2),
-        fmt(data.llegada[i]),
-        fmt(data.servicio[i]),
-        fmt(data.inicio[i]),
-        fmt(data.fin[i]),
-        fmt(data.espera[i])
+      const cellsHTML = [
+        `${i+1}`,
+        (data.uA[i]).toFixed(2),
+        (data.uS[i]).toFixed(2),
+        numCell(data.llegada[i]),
+        numCell(data.servicio[i]),
+        numCell(data.inicio[i]),
+        numCell(data.fin[i]),
+        numCell(data.espera[i])
       ];
-      cells.forEach((c,idx)=>{
+      cellsHTML.forEach((html, idx)=>{
         const td = document.createElement('td');
-        if(idx>=3) td.className = 'num';
-        td.textContent = c;
+        if(idx >= 3) td.className = 'num';
+        td.innerHTML = html;
         tr.appendChild(td);
       });
       tb.appendChild(tr);
@@ -434,9 +450,8 @@ Incluye animación de carga inicial (loader) y dashboard responsive con tarjetas
   }
 
   function calcMetrics(data){
-    const n=6;
     const sum = data.espera.reduce((a,b)=>a+b,0);
-    const avg = r2(sum / n);
+    const avg = r2(sum / N);
     let max = -Infinity, idx = -1;
     data.espera.forEach((v,i)=>{ if(v>max){max=v;idx=i;} });
     return {avg, max, idx};
@@ -444,61 +459,73 @@ Incluye animación de carga inicial (loader) y dashboard responsive con tarjetas
 
   function showMetrics(data){
     const {avg, max, idx} = calcMetrics(data);
-    document.getElementById('avgWait').textContent = `${avg.toFixed(2)} min`;
-    document.getElementById('maxWait').textContent = `Mayor espera: Cliente ${idx+1} con ${max.toFixed(2)} min`;
+    document.getElementById('avgWait').textContent = `${nf.format(avg)} min`;
+    document.getElementById('maxWait').textContent =
+      `Mayor espera: Cliente ${idx+1} con ${nf.format(max)} min`;
 
-    const parts = data.espera.map(v=>v.toFixed(2)).join(' + ');
+    const parts = data.espera.map(v=>nf.format(v)).join(' + ');
     document.getElementById('avgCalc').textContent =
-      `Cálculo: (${parts}) / 6 = ${avg.toFixed(2)} min`;
-
-    const badge = document.getElementById('avgBadge');
-    const isDefault = arraysEqualApprox(data.uA, defaultUA) && arraysEqualApprox(data.uS, defaultUS);
-    if(isDefault && avg >= 2.20 && avg <= 2.26){
-      badge.style.background = 'linear-gradient(135deg, var(--accent-3), var(--accent-4))';
-      badge.textContent = 'Validado: ≈ 2.23 min';
-      badge.setAttribute('aria-label','Promedio validado contra el caso fijo (≈ 2.23 min)');
-    }else{
-      badge.style.background = 'linear-gradient(135deg, var(--accent-2), var(--accent-4))';
-      badge.textContent = 'Promedio calculado';
-      badge.setAttribute('aria-label','Promedio calculado para el caso actual');
-    }
+      `Cálculo: (${parts}) / ${N} = ${nf.format(avg)} min`;
   }
 
-  function arraysEqualApprox(a,b,eps=1e-9){
-    if(!a || !b || a.length!==b.length) return false;
-    for(let i=0;i<a.length;i++){
-      if(Math.abs(Number(a[i]) - Number(b[i]))>eps) return false;
-    }
-    return true;
-  }
-
-  // -------------------- Gráficos --------------------
-  function fitCanvasToContainer(canvas){
-    const ratio = window.devicePixelRatio || 1;
-    const w = Math.floor(canvas.clientWidth * ratio);
-    const h = Math.floor(canvas.clientHeight * ratio);
+  // -------------------- Canvas helpers (DPR y tamaño) --------------------
+  function ensureHiDPICanvas(canvas){
+    const dpr = window.devicePixelRatio || 1;
+    const rect = canvas.getBoundingClientRect();
+    const w = Math.max(1, Math.floor(rect.width * dpr));
+    const h = Math.max(1, Math.floor(rect.height * dpr));
     if(canvas.width !== w || canvas.height !== h){
       canvas.width = w; canvas.height = h;
     }
-    return {W:canvas.width, H:canvas.height};
+    const ctx = canvas.getContext('2d');
+    ctx.setTransform(dpr,0,0,dpr,0,0);
+    return {ctx, W:rect.width, H:rect.height, dpr};
   }
 
+  // -------------------- Gráficos --------------------
   function drawSparkline(data){
-    const cvs = document.getElementById('spark'), ctx = cvs.getContext('2d');
-    const {W,H} = fitCanvasToContainer(cvs);
-    const waits = data.espera;
+    const cvs = document.getElementById('spark');
+    const {ctx, W, H} = ensureHiDPICanvas(cvs);
     ctx.clearRect(0,0,W,H);
-    const pad = 28;
+
+    const waits = data.espera;
+    const pad = 32;
     const max = Math.max(...waits, 1);
-    const stepX = (W - pad*2) / (waits.length - 1);
+    const stepX = (W - pad*2) / Math.max(1,(waits.length - 1));
 
-    ctx.globalAlpha = .5;
-    ctx.strokeStyle = '#cbd5e1';
-    ctx.beginPath(); ctx.moveTo(pad, H - pad); ctx.lineTo(W - pad, H - pad); ctx.stroke();
-    ctx.globalAlpha = 1;
+    // Ejes
+    ctx.strokeStyle = '#e5e7eb'; ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(pad, H - pad); ctx.lineTo(W - pad, H - pad);
+    ctx.moveTo(pad, pad);     ctx.lineTo(pad, H - pad);
+    ctx.stroke();
 
-    ctx.lineWidth = 3;
-    ctx.strokeStyle = '#7aa7ff';
+    // Labels Y (0 y máx)
+    ctx.fillStyle = '#6b7280'; ctx.font='12px Poppins'; ctx.textAlign='right';
+    ctx.fillText("0", pad-6, H - pad+4);
+    ctx.fillText(`${nf.format(r2(max))}`, pad-6, pad+4);
+
+    // Línea de promedio
+    const avg = waits.reduce((a,b)=>a+b,0)/waits.length;
+    const yAvg = H - pad - (avg/max)*(H - pad*2);
+    ctx.strokeStyle = '#10b981';
+    ctx.setLineDash([4,4]);
+    ctx.beginPath(); ctx.moveTo(pad, yAvg); ctx.lineTo(W - pad, yAvg); ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.textAlign = 'right'; ctx.fillText(`Prom ${nf.format(r2(avg))}`, W - pad, yAvg - 6);
+
+    // Área
+    ctx.beginPath();
+    waits.forEach((v,i)=>{
+      const x = pad + i*stepX;
+      const y = H - pad - (v/max)*(H - pad*2);
+      if(i===0) ctx.moveTo(x,y); else ctx.lineTo(x,y);
+    });
+    ctx.lineTo(W - pad, H - pad); ctx.lineTo(pad, H - pad); ctx.closePath();
+    ctx.fillStyle = 'rgba(59,130,246,0.2)'; ctx.fill();
+
+    // Línea
+    ctx.lineWidth = 2.5; ctx.strokeStyle = '#3b82f6';
     ctx.beginPath();
     waits.forEach((v,i)=>{
       const x = pad + i*stepX;
@@ -507,39 +534,104 @@ Incluye animación de carga inicial (loader) y dashboard responsive con tarjetas
     });
     ctx.stroke();
 
-    ctx.fillStyle = '#3b82f6';
+    // Puntos para tooltip
+    ctx.fillStyle = '#2563eb';
+    const pts = [];
     waits.forEach((v,i)=>{
       const x = pad + i*stepX;
       const y = H - pad - (v/max)*(H - pad*2);
-      ctx.beginPath(); ctx.arc(x,y,4*(window.devicePixelRatio||1),0,Math.PI*2); ctx.fill();
+      ctx.beginPath(); ctx.arc(x,y,4,0,Math.PI*2); ctx.fill();
+      pts.push({x,y,i,val:v});
     });
+    cvs._pts = pts;
+
+    // Eje X (clientes)
+    ctx.textAlign = 'center'; ctx.fillStyle = '#6b7280';
+    waits.forEach((_,i)=> ctx.fillText(`C${i+1}`, pad + i*stepX, H - pad + 16));
   }
 
+  // Tooltip compartido
+  const tooltip = document.createElement('div');
+  tooltip.style.position = 'fixed';
+  tooltip.style.pointerEvents = 'none';
+  tooltip.style.background = 'rgba(17,24,39,.95)';
+  tooltip.style.color = '#fff';
+  tooltip.style.padding = '8px 10px';
+  tooltip.style.borderRadius = '10px';
+  tooltip.style.fontSize = '12px';
+  tooltip.style.boxShadow = '0 6px 18px rgba(0,0,0,.25)';
+  tooltip.style.zIndex = '10001';
+  tooltip.style.opacity = '0';
+  tooltip.setAttribute('role','status');
+  tooltip.setAttribute('aria-live','polite');
+  document.body.appendChild(tooltip);
+
+  // Tooltip para sparkline
+  (function attachSparkTooltip(){
+    const cvs = document.getElementById('spark');
+    cvs.addEventListener('mousemove', ev=>{
+      if(!lastData || !cvs._pts) return;
+      const rect = cvs.getBoundingClientRect();
+      const x = ev.clientX - rect.left;
+      const y = ev.clientY - rect.top;
+      const hit = cvs._pts.find(p => Math.hypot(x-p.x,y-p.y) < 8);
+      if(hit){
+        tooltip.innerHTML = `<strong>Cliente ${hit.i+1}</strong><br>Espera: ${fmt(hit.val)}`;
+        tooltip.style.left = (ev.clientX + 12) + 'px';
+        tooltip.style.top  = (ev.clientY + 12) + 'px';
+        tooltip.style.opacity = '1';
+      }else{
+        tooltip.style.opacity = '0';
+      }
+    });
+    cvs.addEventListener('mouseleave', ()=> tooltip.style.opacity='0');
+  })();
+
+  // Gantt
   function drawGantt(data){
-    const cvs = document.getElementById('gantt'), ctx = cvs.getContext('2d');
-    const {W,H} = fitCanvasToContainer(cvs);
+    const cvs = document.getElementById('gantt');
+    const {ctx, W, H} = ensureHiDPICanvas(cvs);
     ctx.clearRect(0,0,W,H);
-    const pad = 40;
-    const rows = 6;
-    const rowH = (H - pad*2) / rows;
+
+    // Márgenes internos
+    const padL = 56, padR = 24, padT = 20, padB = 32;
+    const innerW = Math.max(1, W - padL - padR);
+    const innerH = Math.max(1, H - padT - padB);
+
+    const rows = N;
+    const rowH = innerH / rows;
     const tMin = 0;
     const tMax = Math.max(...data.fin);
-    const xScale = (t) => pad + (t - tMin) / (tMax - tMin) * (W - pad*2);
+    const span = Math.max(1e-6, tMax - tMin);
 
-    ctx.strokeStyle = '#e5e7eb'; ctx.lineWidth = 1*(window.devicePixelRatio||1);
-    for(let g=0; g<=5; g++){
-      const t = tMin + g*(tMax - tMin)/5;
+    const xScale = (t) => padL + (t - tMin) / span * innerW;
+
+    // Ticks verticales adaptativos
+    const tickCount = Math.max(3, Math.min(8, Math.round(innerW / 140)));
+    ctx.strokeStyle = '#e5e7eb'; ctx.lineWidth = 1; ctx.setLineDash([2,4]);
+    for(let g=0; g<=tickCount; g++){
+      const t = tMin + g * (span / tickCount);
       const x = xScale(t);
-      ctx.beginPath(); ctx.moveTo(x, pad - 8); ctx.lineTo(x, H - pad + 8); ctx.stroke();
-      ctx.fillStyle = '#9ca3af';
-      ctx.save(); ctx.scale((window.devicePixelRatio||1),(window.devicePixelRatio||1));
-      ctx.font = '12px Poppins';
-      ctx.fillText(r2(t).toFixed(2), x/(window.devicePixelRatio||1)-14, (H - pad + 22)/(window.devicePixelRatio||1));
-      ctx.restore();
+      ctx.beginPath(); ctx.moveTo(x, padT - 6); ctx.lineTo(x, H - padB + 6); ctx.stroke();
+
+      // etiqueta de tiempo
+      ctx.setLineDash([]); ctx.fillStyle = '#6b7280'; ctx.font = '12px Poppins';
+      ctx.textAlign = 'center'; ctx.fillText(nf.format(r2(t)), x, H - padB + 18);
+      ctx.setLineDash([2,4]);
+    }
+    ctx.setLineDash([]);
+
+    // Etiquetas de filas (C1..C6)
+    ctx.fillStyle = '#94a3b8'; ctx.textAlign = 'left'; ctx.font = '12px Poppins';
+    for(let i=0;i<rows;i++){
+      const yMid = padT + i*rowH + rowH*0.65;
+      ctx.fillText(`C${i+1}`, 12, yMid);
     }
 
+    // barras + hitboxes
+    cvs._boxes = [];
     for(let i=0;i<rows;i++){
-      const y = pad + i*rowH + rowH*0.2;
+      const y = padT + i*rowH + rowH*0.2;
       const h = rowH*0.6;
 
       if(data.espera[i] > 0){
@@ -547,18 +639,14 @@ Incluye animación de carga inicial (loader) y dashboard responsive con tarjetas
         const wx2 = xScale(data.inicio[i]);
         ctx.fillStyle = '#FFD6E0';
         roundRect(ctx, wx1, y, wx2 - wx1, h, 10); ctx.fill();
+        cvs._boxes.push({x:wx1,y,h,w:(wx2-wx1), i, type:'espera'});
       }
 
       const sx1 = xScale(data.inicio[i]);
       const sx2 = xScale(data.fin[i]);
       ctx.fillStyle = '#B8E1FF';
       roundRect(ctx, sx1, y, sx2 - sx1, h, 10); ctx.fill();
-
-      ctx.fillStyle = '#475569';
-      ctx.save(); ctx.scale((window.devicePixelRatio||1),(window.devicePixelRatio||1));
-      ctx.font = '12px Poppins';
-      ctx.fillText(`C${i+1}`, 8, (y + h - 2)/(window.devicePixelRatio||1));
-      ctx.restore();
+      cvs._boxes.push({x:sx1,y,h,w:(sx2-sx1), i, type:'servicio'});
     }
   }
 
@@ -573,61 +661,248 @@ Incluye animación de carga inicial (loader) y dashboard responsive con tarjetas
     ctx.closePath();
   }
 
-  // -------------------- Simulación y eventos --------------------
-  const chipsUA = document.getElementById('chips-ua');
-  const chipsUS = document.getElementById('chips-us');
-
-  function updateChips(uA,uS){
-    chips(chipsUA, uA, ['#fff','#FFFAF0','#fff','#FFFAF0','#fff','#FFFAF0']);
-    chips(chipsUS, uS, ['#fff','#F1FFF5','#fff','#F1FFF5','#fff','#F1FFF5']);
+  // -------------------- Monte Carlo --------------------
+  function parseK(raw){
+    const k = Number.parseInt(String(raw).trim(),10);
+    if(!Number.isFinite(k)) throw new Error('k debe ser un número entero.');
+    if(k < 10 || k > 10000) throw new Error('k debe estar entre 10 y 10000.');
+    return k;
   }
 
-  function simulate(){
-    const mode = document.querySelector('input[name="modo"]:checked').value;
-    let UA, US;
-    if(mode==='manual'){
-      UA = parseUInput(document.getElementById('uLlegadas').value);
-      US = parseUInput(document.getElementById('uServicio').value);
-    }
-    const data = generateData(mode, UA, US);
-    lastData = data;
-
-    updateChips(data.uA, data.uS);
-    buildTable(data);
-    showMetrics(data);
-    drawSparkline(data);
-    drawGantt(data);
-    runAsserts(data);
-
-    // Quitar loader con una duración mínima agradable
-    const minDuration = 1200; // ms
-    const elapsed = performance.now() - loadStarted;
-    const remaining = Math.max(0, minDuration - elapsed);
-    setTimeout(()=>{
-      document.getElementById('loader').classList.add('hidden');
-      document.getElementById('app').classList.add('ready');
-    }, remaining);
-
-    document.getElementById('avgBadge').setAttribute('aria-live','assertive');
-  }
-
-  function runAsserts(data){
+  document.getElementById('runMC').addEventListener('click', ()=>{
     try{
-      console.assert(data.uA.length===6 && data.uS.length===6, 'Las secuencias U deben tener longitud 6.');
-      const allNums = [...data.uA, ...data.uS, ...data.llegada, ...data.servicio, ...data.inicio, ...data.fin, ...data.espera];
-      console.assert(allNums.every(v => Number.isFinite(v) && !Number.isNaN(v)), 'No debe haber NaN en los cálculos.');
+      const k = parseK(document.getElementById('replicas').value);
 
-      const isDefault = arraysEqualApprox(data.uA, defaultUA) && arraysEqualApprox(data.uS, defaultUS);
-      if(isDefault){
-        const avg = calcMetrics(data).avg;
-        console.assert(avg >= 2.20 && avg <= 2.26, `El promedio de espera (${avg}) debe estar en ~2.23 min para el caso fijo.`);
-      }else{
-        console.info('Prueba de rango de promedio omitida (modo no es el caso fijo).');
+      const avgs = [];
+      for(let r=0;r<k;r++){
+        const uA = Array.from({length:N}, ()=> clampU(0.1 + Math.random()*0.8));
+        const uS = Array.from({length:N}, ()=> clampU(0.1 + Math.random()*0.8));
+        const inter = uA.map(u => r2(-LAMBDA * Math.log(u)));
+        const llegada = inter.reduce((acc,val,i)=> (i? acc.concat(r2(acc[i-1]+val)) : [val]), []);
+        const servicio = uS.map(u => r2(A + (B - A)*u));
+        const inicio = [], fin = [], espera = [];
+        for(let i=0;i<N;i++){
+          const prevFin = i>0 ? fin[i-1] : 0;
+          inicio[i] = r2(Math.max(llegada[i], prevFin));
+          fin[i]    = r2(inicio[i] + servicio[i]);
+          espera[i] = r2(inicio[i] - llegada[i]);
+        }
+        avgs.push(espera.reduce((a,b)=>a+b,0)/N);
       }
+
+      const mean = avgs.reduce((a,b)=>a+b,0)/k;
+      const sd = Math.sqrt(avgs.reduce((a,b)=> a + Math.pow(b-mean,2),0)/(k-1 || 1));
+      document.getElementById('mcStats').textContent =
+        `Media(${k}) = ${nf.format(r2(mean))} min · DE = ${nf.format(r2(sd))} min`;
+
+      drawHistogram(avgs, mean, sd);
     }catch(e){
-      console.error(e);
+      showToast(e.message || 'Error en Monte Carlo');
     }
+  });
+
+  // Histograma con banda, media, KDE y tooltip
+  function drawHistogram(data, mean, sd){
+    const cvs = document.getElementById('hist');
+    const {ctx, W, H} = ensureHiDPICanvas(cvs);
+    ctx.clearRect(0,0,W,H);
+    if(!data.length) return;
+
+    const bins = Math.max(6, Math.round(Math.sqrt(data.length)));
+    const min = Math.min(...data), max = Math.max(...data);
+    const span = Math.max(1e-6, max - min);
+    const edges = Array.from({length: bins+1}, (_,i)=> min + i*span/bins);
+    const counts = Array(bins).fill(0);
+    data.forEach(v=>{
+      let idx = Math.floor((v - min)/span * bins);
+      if(idx === bins) idx = bins-1;
+      counts[idx]++;
+    });
+    const padL = 40, padR = 16, padT = 18, padB = 32;
+    const innerW = W - padL - padR;
+    const innerH = H - padT - padB;
+    const yMax = Math.max(...counts, 1);
+
+    // Ejes
+    ctx.strokeStyle = '#e5e7eb'; ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(padL, H - padB); ctx.lineTo(W - padR, H - padB);
+    ctx.moveTo(padL, padT);     ctx.lineTo(padL, H - padB);
+    ctx.stroke();
+
+    // Ticks X (mín, media, máx)
+    ctx.fillStyle = '#6b7280'; ctx.font = '12px Poppins'; ctx.textAlign = 'center';
+    const xScale = v => padL + (v - min)/span * innerW;
+    ctx.fillText(nf.format(r2(min)),  xScale(min),  H - padB + 18);
+    ctx.fillText(nf.format(r2(mean)), xScale(mean), H - padB + 18);
+    ctx.fillText(nf.format(r2(max)),  xScale(max),  H - padB + 18);
+
+    // Banda Media ± DE
+    const bandL = xScale(mean - sd);
+    const bandR = xScale(mean + sd);
+    ctx.fillStyle = 'rgba(34,197,94,.25)';
+    ctx.fillRect(bandL, padT, Math.max(0, bandR - bandL), innerH);
+
+    // Barras
+    const bw = innerW / bins;
+    cvs._bins = [];
+    for(let i=0;i<bins;i++){
+      const c = counts[i];
+      const h = (c / yMax) * innerH;
+      const x = padL + i*bw + 2;
+      const y = H - padB - h;
+      const w = Math.max(2, bw - 4);
+      ctx.fillStyle = '#B8E1FF';
+      roundRect(ctx, x, y, w, h, Math.min(10, w/3));
+      ctx.fill();
+      cvs._bins.push({x,y,w,h,count:c,from:edges[i],to:edges[i+1]});
+    }
+
+    // Línea Media
+    ctx.strokeStyle = '#ef4444';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    const xm = xScale(mean);
+    ctx.moveTo(xm, padT); ctx.lineTo(xm, H - padB); ctx.stroke();
+
+    // Curva KDE
+    drawKDE(ctx, data, {xScale, padT, padB, innerH});
+
+    // Etiqueta Y (máx)
+    ctx.fillStyle = '#6b7280'; ctx.textAlign = 'right';
+    ctx.fillText(yMax.toString(), padL - 6, padT + 10);
+
+    // Tooltip
+    attachHistTooltip(cvs);
   }
+
+  // KDE gaussiano (Silverman)
+  function drawKDE(ctx, arr, geom){
+    const n = arr.length;
+    if(n < 5) return;
+    const mean = arr.reduce((a,b)=>a+b,0)/n;
+    const sd = Math.sqrt(arr.reduce((a,b)=> a + Math.pow(b-mean,2),0)/(n-1 || 1)) || 1e-6;
+    const h = 1.06 * sd * Math.pow(n, -1/5);
+
+    const xs = 180;
+    let maxDensity = 0;
+    const dens = [];
+    for(let i=0;i<=xs;i++){
+      const x = mean - 3*sd + (6*sd)*i/xs;
+      let s = 0;
+      for(let j=0;j<n;j++){
+        const z = (x - arr[j]) / h;
+        s += Math.exp(-0.5*z*z);
+      }
+      dens.push({x, v: s});
+      if(s > maxDensity) maxDensity = s;
+    }
+
+    const {xScale, padT, padB, innerH} = geom;
+    ctx.strokeStyle = '#7dd3fc';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    dens.forEach((p, i)=>{
+      const x = xScale(p.x);
+      const y = (H => H - padB - (p.v/maxDensity) * innerH)(ctx.canvas.height);
+      if(i===0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+    });
+    ctx.stroke();
+  }
+
+  // Tooltip histograma
+  function attachHistTooltip(cvs){
+    cvs.addEventListener('mousemove', ev=>{
+      if(!cvs._bins) return;
+      const rect = cvs.getBoundingClientRect();
+      const x = ev.clientX - rect.left;
+      const y = ev.clientY - rect.top;
+      const hit = cvs._bins.find(b => x>=b.x && x<=b.x+b.w && y>=b.y && y<=b.y+b.h);
+      if(hit){
+        tooltip.innerHTML =
+          `<strong>Frecuencia:</strong> ${hit.count}<br>
+           <strong>Rango:</strong> ${nf.format(r2(hit.from))} – ${nf.format(r2(hit.to))} min`;
+        tooltip.style.left = (ev.clientX + 12) + 'px';
+        tooltip.style.top  = (ev.clientY + 12) + 'px';
+        tooltip.style.opacity = '1';
+      }else{
+        tooltip.style.opacity = '0';
+      }
+    });
+    cvs.addEventListener('mouseleave', ()=> tooltip.style.opacity='0');
+  }
+
+  // Tooltip Gantt
+  (function attachGanttTooltip(){
+    const cvs = document.getElementById('gantt');
+    cvs.addEventListener('mousemove', ev=>{
+      if(!lastData || !cvs._boxes) return;
+      const rect = cvs.getBoundingClientRect();
+      const x = ev.clientX - rect.left;
+      const y = ev.clientY - rect.top;
+      const hit = cvs._boxes.find(b => x>=b.x && x<=b.x+b.w && y>=b.y && y<=b.y+b.h);
+      if(hit){
+        const i = hit.i;
+        tooltip.innerHTML =
+          `<strong>Cliente ${i+1}</strong><br>
+           Llegada: ${fmt(lastData.llegada[i])}<br>
+           Inicio: ${fmt(lastData.inicio[i])} · Fin: ${fmt(lastData.fin[i])}<br>
+           Servicio: ${fmt(lastData.servicio[i])} · Espera: ${fmt(lastData.espera[i])}`;
+        tooltip.style.left = (ev.clientX + 12) + 'px';
+        tooltip.style.top  = (ev.clientY + 12) + 'px';
+        tooltip.style.opacity = '1';
+      }else{
+        tooltip.style.opacity = '0';
+      }
+    });
+    cvs.addEventListener('mouseleave', ()=> tooltip.style.opacity='0');
+  })();
+
+  // Redibujar en resize
+  function redrawOnResize(){
+    if(!lastData) return;
+    drawSparkline(lastData);
+    drawGantt(lastData);
+  }
+  const ro = new ResizeObserver(()=> requestAnimationFrame(redrawOnResize));
+  ro.observe(document.getElementById('app'));
+
+  // Botón Simular
+  document.getElementById('run').addEventListener('click', ()=>{
+    try{
+      const mode = document.querySelector('input[name="modo"]:checked')?.value || 'manual';
+      let UA, US;
+      if(mode==='manual'){
+        UA = parseUInput(document.getElementById('uLlegadas').value);
+        US = parseUInput(document.getElementById('uServicio').value);
+      }
+      loadStarted = performance.now();
+      const data = generateData(mode, UA, US);
+      lastData = data;
+
+      // UI
+      chips(document.getElementById('chips-ua'), data.uA, ['#fff','#FFFAF0','#fff','#FFFAF0','#fff','#FFFAF0']);
+      chips(document.getElementById('chips-us'), data.uS, ['#fff','#F1FFF5','#fff','#F1FFF5','#fff','#F1FFF5']);
+      buildTable(data);
+      showMetrics(data);
+      drawSparkline(data);
+      drawGantt(data);
+
+      // Quitar loader con una duración mínima agradable
+      const minDuration = 1200;
+      const elapsed = performance.now() - loadStarted;
+      const remaining = Math.max(0, minDuration - elapsed);
+      setTimeout(()=>{
+        document.getElementById('loader').classList.add('hidden');
+        document.getElementById('app').classList.add('ready');
+      }, remaining);
+
+      requestAnimationFrame(()=> document.getElementById('avgWait').focus());
+      showToast('Simulación actualizada.');
+    }catch(e){
+      showToast(e.message || 'Entrada inválida');
+    }
+  });
 
   // Toggle inputs
   document.getElementById('modo-aleatorio').addEventListener('change', ()=>{
@@ -638,7 +913,7 @@ Incluye animación de carga inicial (loader) y dashboard responsive con tarjetas
     document.getElementById('uLlegadas').focus();
   });
 
-  // Keyboard on segmented
+  // Teclado en segmented
   document.querySelectorAll('.segmented label').forEach(lbl=>{
     lbl.addEventListener('keydown', (ev)=>{
       if(ev.key==='Enter' || ev.key===' '){
@@ -651,22 +926,8 @@ Incluye animación de carga inicial (loader) y dashboard responsive con tarjetas
     });
   });
 
-  // Redibujar en resize sin alterar datos
-  function redrawOnResize(){
-    if(!lastData) return;
-    drawSparkline(lastData);
-    drawGantt(lastData);
-  }
-  window.addEventListener('resize', redrawOnResize);
-
-  document.getElementById('run').addEventListener('click', ()=>{
-    loadStarted = performance.now();
-    simulate();
-  });
-
-  // Primera corrida (modo Manual con el caso fijo)
-  simulate();
-
+  // Primera corrida
+  document.getElementById('run').click();
   </script>
 </body>
 </html>
