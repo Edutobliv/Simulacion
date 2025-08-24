@@ -55,8 +55,17 @@ Ejercicio fijo: media de llegada 3 min (exponencial) y servicio uniforme [2,4] c
       padding:8px 12px;border-radius:999px;font-weight:600;
       background:var(--accent-5);box-shadow:var(--shadow-soft);font-size:.9rem
     }
+    .callout{
+      margin-top:10px;
+      background:rgba(255,255,255,.72);
+      border:1px dashed rgba(0,0,0,.06);
+      border-radius:12px;
+      padding:12px 14px;
+      box-shadow:var(--shadow-soft);
+      font-size:.98rem;
+    }
     .controls{
-      margin-top:16px;display:flex;flex-wrap:wrap;gap:12px;align-items:center
+      margin-top:14px;display:flex;flex-wrap:wrap;gap:12px;align-items:flex-end
     }
     .segmented{
       display:inline-flex;border-radius:999px;background:var(--bg-glass);
@@ -70,8 +79,13 @@ Ejercicio fijo: media de llegada 3 min (exponencial) y servicio uniforme [2,4] c
       background:white;border-radius:999px;box-shadow:var(--shadow-soft)
     }
     .inputs{
-      display:flex;gap:10px;flex-wrap:wrap;align-items:center
+      display:flex;gap:12px;flex-wrap:wrap;align-items:flex-end
     }
+    .field{display:flex;flex-direction:column;gap:6px;min-width:300px}
+    .field label{
+      font-size:.9rem;font-weight:600;color:#374151
+    }
+    .hint{font-size:.8rem;color:#6b7280}
     .inputs input[type="text"]{
       min-width:300px;max-width:520px;width:100%;
       padding:10px 12px;border-radius:10px;border:1px solid #e5e7eb;
@@ -86,10 +100,21 @@ Ejercicio fijo: media de llegada 3 min (exponencial) y servicio uniforme [2,4] c
     button.primary:active{transform:translateY(0);filter:brightness(.97)}
     button.primary:focus{outline:3px solid rgba(30,64,175,.25);outline-offset:2px}
 
-    .grid{
+    /* Top: tarjetas pequeñas */
+    .grid-top{
       display:grid;gap:16px;margin-top:18px;
       grid-template-columns:repeat(auto-fit,minmax(280px,1fr))
     }
+
+    /* Bottom: tarjetas grandes (Gantt + Tabla) */
+    .grid-bottom{
+      display:grid;gap:16px;margin-top:18px;
+      grid-template-columns:1fr;
+    }
+    @media (min-width: 900px){
+      .grid-bottom{grid-template-columns:1fr 1.1fr}
+    }
+
     .card{
       background:var(--card);
       backdrop-filter: blur(8px);
@@ -101,6 +126,9 @@ Ejercicio fijo: media de llegada 3 min (exponencial) y servicio uniforme [2,4] c
     }
     .card h3{margin:4px 0 10px;font-size:1.05rem}
     .card p{margin:.25rem 0;color:var(--muted)}
+    .card.tall{min-height:440px;padding:18px}
+    .card.tall h3{font-size:1.15rem}
+
     .kpi{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
     .kpi .value{
       font-size:2rem;font-weight:800;letter-spacing:.3px;
@@ -117,20 +145,25 @@ Ejercicio fijo: media de llegada 3 min (exponencial) y servicio uniforme [2,4] c
 
     .table-wrap{overflow:auto}
     table{
-      width:100%;border-collapse:separate;border-spacing:0 8px;min-width:760px
+      width:100%;border-collapse:separate;border-spacing:0 10px;min-width:820px
     }
     thead th{
-      text-align:left;font-size:.88rem;color:#334155;font-weight:700;padding:10px 12px
+      position:sticky;top:0;background:#f9fafb;
+      text-align:left;font-size:.95rem;color:#334155;font-weight:700;padding:12px 14px;z-index:1
     }
     tbody td{
-      background:white;padding:10px 12px;border-top:1px solid #eef2f7;border-bottom:1px solid #eef2f7
+      background:white;padding:14px 14px;border-top:1px solid #eef2f7;border-bottom:1px solid #eef2f7;
+      font-size:1rem
     }
-    tbody tr td:first-child{border-left:1px solid #eef2f7;border-top-left-radius:12px;border-bottom-left-radius:12px;font-weight:700}
-    tbody tr td:last-child{border-right:1px solid #eef2f7;border-top-right-radius:12px;border-bottom-right-radius:12px}
+    tbody tr td:first-child{border-left:1px solid #eef2f7;border-top-left-radius:14px;border-bottom-left-radius:14px;font-weight:700}
+    tbody tr td:last-child{border-right:1px solid #eef2f7;border-top-right-radius:14px;border-bottom-right-radius:14px}
     .num{text-align:right;white-space:nowrap}
 
-    canvas{width:100%;height:160px;display:block}
-    .legend{display:flex;gap:12px;align-items:center;margin-top:8px;color:var(--muted);font-size:.9rem}
+    /* Canvases */
+    canvas{width:100%;display:block}
+    #spark{height:220px}
+    #gantt{height:340px}
+    .legend{display:flex;gap:12px;align-items:center;margin-top:8px;color:var(--muted);font-size:.95rem}
     .legend span{display:inline-flex;align-items:center;gap:6px}
     .swatch{width:14px;height:10px;border-radius:4px;display:inline-block}
 
@@ -148,6 +181,12 @@ Ejercicio fijo: media de llegada 3 min (exponencial) y servicio uniforme [2,4] c
       <span class="badge" aria-label="Caso fijo de eventos discretos">Caso fijo • 1 servidor</span>
       <h1>Simulación de Panadería (Caso Fijo)</h1>
       <p>Cola de un solo servidor. Llegadas ∼ Exponencial (media 3&nbsp;min) y servicio ∼ Uniforme [2,4]. Simulamos 6 clientes.</p>
+      <div class="callout" aria-label="Enunciado del ejercicio">
+        <strong>Enunciado.</strong> En una panadería los clientes llegan de media cada <strong>3&nbsp;min</strong>.
+        El tiempo de servicio está entre <strong>2 y 4&nbsp;min</strong> por cliente (uniforme). 
+        Con <strong>6 clientes de referencia</strong>, determine el <strong>promedio de espera</strong>.
+      </div>
+
       <div class="controls" role="group" aria-label="Controles de simulación">
         <div class="segmented" role="radiogroup" aria-label="Modo de U">
           <input id="modo-manual" name="modo" type="radio" value="manual" checked aria-checked="true" />
@@ -155,28 +194,43 @@ Ejercicio fijo: media de llegada 3 min (exponencial) y servicio uniforme [2,4] c
           <input id="modo-aleatorio" name="modo" type="radio" value="aleatorio" />
           <label for="modo-aleatorio" tabindex="0">Aleatorio</label>
         </div>
+
         <div class="inputs" id="manual-inputs">
-          <label class="sr-only" for="uLlegadas">U para llegadas</label>
-          <input id="uLlegadas" type="text" aria-label="U para llegadas (lista separada por comas)" value="0.50,0.60,0.20,0.80,0.70,0.60" />
-          <label class="sr-only" for="uServicio">U para servicio</label>
-          <input id="uServicio" type="text" aria-label="U para servicio (lista separada por comas)" value="0.30,0.80,0.60,0.50,0.20,0.80" />
+          <div class="field">
+            <label for="uLlegadas">U <em>(llegadas)</em> — Exponencial (media 3&nbsp;min)</label>
+            <input
+              id="uLlegadas"
+              type="text"
+              placeholder="U de llegadas (6 valores, ej.: 0.50,0.60,0.20,0.80,0.70,0.60)"
+              aria-label="U para llegadas (lista separada por comas)"
+              value="0.50,0.60,0.20,0.80,0.70,0.60" />
+            <span class="hint">Se usan para calcular interarribos: <code>T = −3·ln(U)</code>.</span>
+          </div>
+
+          <div class="field">
+            <label for="uServicio">U <em>(servicio)</em> — Uniforme [2,4]</label>
+            <input
+              id="uServicio"
+              type="text"
+              placeholder="U de servicio (6 valores, ej.: 0.30,0.80,0.60,0.50,0.20,0.80)"
+              aria-label="U para servicio (lista separada por comas)"
+              value="0.30,0.80,0.60,0.50,0.20,0.80" />
+            <span class="hint">Se usan para calcular: <code>S = 2 + (4 − 2)·U = 2 + 2U</code>.</span>
+          </div>
         </div>
+
         <button id="run" class="primary" aria-label="Ejecutar simulación">Simular</button>
       </div>
     </header>
 
-    <section class="grid" aria-label="Tarjetas de resumen y detalle">
+    <!-- Tarjetas superiores (compactas) -->
+    <section class="grid-top" aria-label="Tarjetas de resumen">
       <article class="card hover-up" aria-label="Parámetros y fórmulas">
         <h3>Parámetros y fórmulas</h3>
         <p><strong>Llegadas (Exponencial, media = 3):</strong></p>
         <div class="chip" aria-label="Fórmula exponencial">T = −λ · ln(U), λ = 3, U ∈ (0,1)</div>
         <p style="margin-top:8px"><strong>Servicio (Uniforme [2,4]):</strong></p>
         <div class="chip" aria-label="Fórmula uniforme">S = a + (b − a)·U, a = 2, b = 4</div>
-        <p style="margin-top:10px">Política: <em>FIFO</em>, servidor único. Reglas:<br/>
-          <code>inicio[i] = max(llegada[i], fin[i−1])</code> ·
-          <code>fin[i] = inicio[i] + servicio[i]</code> ·
-          <code>espera[i] = inicio[i] − llegada[i]</code>
-        </p>
       </article>
 
       <article class="card hover-up" aria-label="Secuencias U usadas">
@@ -202,19 +256,22 @@ Ejercicio fijo: media de llegada 3 min (exponencial) y servicio uniforme [2,4] c
 
       <article class="card hover-up" aria-label="Sparkline de espera">
         <h3>Espera por cliente (sparkline)</h3>
-        <canvas id="spark" width="720" height="180" role="img" aria-label="Serie de tiempo del tiempo de espera por cliente"></canvas>
+        <canvas id="spark" width="720" height="220" role="img" aria-label="Serie de tiempo del tiempo de espera por cliente"></canvas>
       </article>
+    </section>
 
-      <article class="card hover-up" aria-label="Mini Gantt">
+    <!-- Tarjetas inferiores (grandes) -->
+    <section class="grid-bottom" aria-label="Detalle ampliado (Gantt y Tabla)">
+      <article class="card tall hover-up" aria-label="Mini Gantt">
         <h3>Línea de tiempo / Gantt</h3>
-        <canvas id="gantt" width="720" height="240" role="img" aria-label="Diagrama de barras de inicio/fin de servicio"></canvas>
+        <canvas id="gantt" width="720" height="340" role="img" aria-label="Diagrama de barras de inicio/fin de servicio"></canvas>
         <div class="legend" aria-hidden="true">
           <span><i class="swatch" style="background:var(--accent-2)"></i> Espera</span>
           <span><i class="swatch" style="background:var(--accent-1)"></i> Servicio</span>
         </div>
       </article>
 
-      <article class="card hover-up" aria-label="Tabla detallada">
+      <article class="card tall hover-up table-card" aria-label="Tabla detallada">
         <h3>Tabla (6 clientes)</h3>
         <div class="table-wrap">
           <table aria-describedby="tabla-desc">
@@ -251,6 +308,8 @@ Ejercicio fijo: media de llegada 3 min (exponencial) y servicio uniforme [2,4] c
   const LAMBDA = 3; // media de llegadas
   const A = 2, B = 4; // servicio uniforme [2,4]
 
+  let lastData = null; // para redibujar en resize sin recalcular
+
   function parseUInput(str){
     return str.split(/[,\s;]+/).filter(Boolean).map(Number).slice(0,6);
   }
@@ -268,15 +327,8 @@ Ejercicio fijo: media de llegada 3 min (exponencial) y servicio uniforme [2,4] c
   }
 
   // -------------------- Generación de datos --------------------
-  /**
-   * Genera/lee U y calcula variables de la simulación.
-   * @param {'aleatorio'|'manual'} mode
-   * @param {number[]} UA U para llegadas
-   * @param {number[]} US U para servicio
-   */
   function generateData(mode, UA, US){
     const n = 6;
-
     let uA = [], uS = [];
     if(mode === 'manual'){
       uA = (UA && UA.length === n) ? UA : defaultUA.slice();
@@ -292,14 +344,14 @@ Ejercicio fijo: media de llegada 3 min (exponencial) y servicio uniforme [2,4] c
     // Interarribos: T = -λ ln(U) con λ = 3 (redondeo a 2 decimales)
     const inter = uA.map(u => r2(-LAMBDA * Math.log(u)));
 
-    // Llegadas acumuladas (sumando interarribos ya redondeados)
+    // Llegadas acumuladas
     const llegada = inter.reduce((acc,val,i)=>{
       if(i===0) acc.push(val);
       else acc.push(r2(acc[i-1] + val));
       return acc;
     },[]);
 
-    // Servicio (Uniforme [2,4]): S = a + (b-a)U = 2 + 2U
+    // Servicio (Uniforme [2,4]): S = 2 + 2U
     const servicio = uS.map(u => r2(A + (B - A)*u));
 
     // Cola de 1 servidor (FIFO)
@@ -354,7 +406,7 @@ Ejercicio fijo: media de llegada 3 min (exponencial) y servicio uniforme [2,4] c
     document.getElementById('avgWait').textContent = `${avg.toFixed(2)} min`;
     document.getElementById('maxWait').textContent = `Mayor espera: Cliente ${idx+1} con ${max.toFixed(2)} min`;
 
-    // Mostrar cálculo explícito del promedio
+    // Cálculo explícito del promedio
     const parts = data.espera.map(v=>v.toFixed(2)).join(' + ');
     document.getElementById('avgCalc').textContent =
       `Cálculo: (${parts}) / 6 = ${avg.toFixed(2)} min`;
@@ -382,12 +434,22 @@ Ejercicio fijo: media de llegada 3 min (exponencial) y servicio uniforme [2,4] c
   }
 
   // -------------------- Gráficos --------------------
+  function fitCanvasToContainer(canvas){
+    const ratio = window.devicePixelRatio || 1;
+    const w = Math.floor(canvas.clientWidth * ratio);
+    const h = Math.floor(canvas.clientHeight * ratio);
+    if(canvas.width !== w || canvas.height !== h){
+      canvas.width = w; canvas.height = h;
+    }
+    return {W:canvas.width, H:canvas.height};
+  }
+
   function drawSparkline(data){
-    const waits = data.espera;
     const cvs = document.getElementById('spark'), ctx = cvs.getContext('2d');
-    const W = cvs.width, H = cvs.height;
+    const {W,H} = fitCanvasToContainer(cvs);
+    const waits = data.espera;
     ctx.clearRect(0,0,W,H);
-    const pad = 18;
+    const pad = 28;
     const max = Math.max(...waits, 1);
     const stepX = (W - pad*2) / (waits.length - 1);
 
@@ -396,7 +458,7 @@ Ejercicio fijo: media de llegada 3 min (exponencial) y servicio uniforme [2,4] c
     ctx.beginPath(); ctx.moveTo(pad, H - pad); ctx.lineTo(W - pad, H - pad); ctx.stroke();
     ctx.globalAlpha = 1;
 
-    ctx.lineWidth = 2.5;
+    ctx.lineWidth = 3;
     ctx.strokeStyle = '#7aa7ff';
     ctx.beginPath();
     waits.forEach((v,i)=>{
@@ -410,48 +472,57 @@ Ejercicio fijo: media de llegada 3 min (exponencial) y servicio uniforme [2,4] c
     waits.forEach((v,i)=>{
       const x = pad + i*stepX;
       const y = H - pad - (v/max)*(H - pad*2);
-      ctx.beginPath(); ctx.arc(x,y,3,0,Math.PI*2); ctx.fill();
+      ctx.beginPath(); ctx.arc(x,y,4* (window.devicePixelRatio || 1),0,Math.PI*2); ctx.fill();
     });
   }
 
   function drawGantt(data){
     const cvs = document.getElementById('gantt'), ctx = cvs.getContext('2d');
-    const W = cvs.width, H = cvs.height;
+    const {W,H} = fitCanvasToContainer(cvs);
     ctx.clearRect(0,0,W,H);
-    const pad = 28;
+    const pad = 40;
     const rows = 6;
     const rowH = (H - pad*2) / rows;
     const tMin = 0;
     const tMax = Math.max(...data.fin);
     const xScale = (t) => pad + (t - tMin) / (tMax - tMin) * (W - pad*2);
 
-    ctx.strokeStyle = '#e5e7eb'; ctx.lineWidth = 1;
+    // Rejilla
+    ctx.strokeStyle = '#e5e7eb'; ctx.lineWidth = 1 * (window.devicePixelRatio || 1);
     for(let g=0; g<=5; g++){
       const t = tMin + g*(tMax - tMin)/5;
       const x = xScale(t);
-      ctx.beginPath(); ctx.moveTo(x, pad - 6); ctx.lineTo(x, H - pad + 6); ctx.stroke();
-      ctx.fillStyle = '#9ca3af'; ctx.font = '12px Poppins';
-      ctx.fillText(r2(t).toFixed(2), x-14, H - pad + 18);
+      ctx.beginPath(); ctx.moveTo(x, pad - 8); ctx.lineTo(x, H - pad + 8); ctx.stroke();
+      ctx.fillStyle = '#9ca3af'; ctx.font = `${12*(window.devicePixelRatio || 1)}px Poppins`;
+      ctx.save(); ctx.scale((window.devicePixelRatio || 1), (window.devicePixelRatio || 1));
+      ctx.fillText(r2(t).toFixed(2), (x/(window.devicePixelRatio || 1))-14, (H - pad + 22)/(window.devicePixelRatio || 1));
+      ctx.restore();
     }
 
+    // Filas
     for(let i=0;i<rows;i++){
       const y = pad + i*rowH + rowH*0.2;
       const h = rowH*0.6;
 
+      // Espera
       if(data.espera[i] > 0){
         const wx1 = xScale(data.llegada[i]);
         const wx2 = xScale(data.inicio[i]);
         ctx.fillStyle = '#FFD6E0';
-        roundRect(ctx, wx1, y, wx2 - wx1, h, 6); ctx.fill();
+        roundRect(ctx, wx1, y, wx2 - wx1, h, 10); ctx.fill();
       }
 
+      // Servicio
       const sx1 = xScale(data.inicio[i]);
       const sx2 = xScale(data.fin[i]);
       ctx.fillStyle = '#B8E1FF';
-      roundRect(ctx, sx1, y, sx2 - sx1, h, 6); ctx.fill();
+      roundRect(ctx, sx1, y, sx2 - sx1, h, 10); ctx.fill();
 
-      ctx.fillStyle = '#475569'; ctx.font = '12px Poppins';
-      ctx.fillText(`C${i+1}`, 6, y + h - 2);
+      // Etiquetas
+      ctx.fillStyle = '#475569'; ctx.font = `${12*(window.devicePixelRatio || 1)}px Poppins`;
+      ctx.save(); ctx.scale((window.devicePixelRatio || 1), (window.devicePixelRatio || 1));
+      ctx.fillText(`C${i+1}`, 8, (y + h - 2)/(window.devicePixelRatio || 1));
+      ctx.restore();
     }
   }
 
@@ -483,13 +554,13 @@ Ejercicio fijo: media de llegada 3 min (exponencial) y servicio uniforme [2,4] c
       US = parseUInput(document.getElementById('uServicio').value);
     }
     const data = generateData(mode, UA, US);
+    lastData = data;
 
     updateChips(data.uA, data.uS);
     buildTable(data);
     showMetrics(data);
     drawSparkline(data);
     drawGantt(data);
-
     runAsserts(data);
     document.getElementById('avgBadge').setAttribute('aria-live','assertive');
   }
@@ -512,14 +583,16 @@ Ejercicio fijo: media de llegada 3 min (exponencial) y servicio uniforme [2,4] c
     }
   }
 
-  document.getElementById('modo-aleatorio').addEventListener('change', e=>{
+  // Toggle inputs
+  document.getElementById('modo-aleatorio').addEventListener('change', ()=>{
     document.getElementById('manual-inputs').hidden = true;
   });
-  document.getElementById('modo-manual').addEventListener('change', e=>{
+  document.getElementById('modo-manual').addEventListener('change', ()=>{
     document.getElementById('manual-inputs').hidden = false;
     document.getElementById('uLlegadas').focus();
   });
 
+  // Keyboard on segmented
   document.querySelectorAll('.segmented label').forEach(lbl=>{
     lbl.addEventListener('keydown', (ev)=>{
       if(ev.key==='Enter' || ev.key===' '){
@@ -531,6 +604,14 @@ Ejercicio fijo: media de llegada 3 min (exponencial) y servicio uniforme [2,4] c
       }
     });
   });
+
+  // Redibujar en resize sin alterar datos
+  function redrawOnResize(){
+    if(!lastData) return;
+    drawSparkline(lastData);
+    drawGantt(lastData);
+  }
+  window.addEventListener('resize', redrawOnResize);
 
   document.getElementById('run').addEventListener('click', simulate);
 
