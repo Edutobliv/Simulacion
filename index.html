@@ -1,7 +1,3 @@
-<!--
-Simulación de Panadería (Caso Fijo) — index.html
-Caso fijo: media de llegada 3 min (exponencial) y servicio uniforme [2,4] con 6 clientes.
--->
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -23,10 +19,16 @@ Caso fijo: media de llegada 3 min (exponencial) y servicio uniforme [2,4] con 6 
   <style>
     :root{
       --bg:#F7F7FB;
-      --card:rgba(255,255,255,.65);
-      --bg-glass:rgba(255,255,255,.55);
-      --text:#1f2937;
-      --muted:#6b7280;
+      --card-bg:rgba(255,255,255,.65);
+      --glass-bg:rgba(255,255,255,.55);
+      --text-color:#1f2937;
+      --muted-color:#6b7280;
+      --border-color: #e5e7eb;
+      --table-header-bg: #f8fafc;
+      --table-row-hover-bg: #f9fbff;
+      --gantt-wait-bg: #FFD6E0;
+      --gantt-service-bg: #B8E1FF;
+      --hist-bar-bg: #B8E1FF;
       --accent-1:#B8E1FF;
       --accent-2:#FFD6E0;
       --accent-3:#C3F0CA;
@@ -36,16 +38,30 @@ Caso fijo: media de llegada 3 min (exponencial) y servicio uniforme [2,4] con 6 
       --shadow:0 10px 30px rgba(0,0,0,.08);
       --shadow-soft:0 6px 18px rgba(0,0,0,.06);
     }
+    body.dark-mode{
+      --bg:#111827;
+      --card-bg:rgba(31, 41, 55, .65);
+      --glass-bg:rgba(31, 41, 55, .55);
+      --text-color:#f9fafb;
+      --muted-color:#9ca3af;
+      --border-color: #374151;
+      --table-header-bg: #1f2937;
+      --table-row-hover-bg: #111827;
+      --gantt-wait-bg: #831843;
+      --gantt-service-bg: #1e40af;
+      --hist-bar-bg: #1e40af;
+    }
     *{box-sizing:border-box}
     html,body{height:100%}
     body{
       margin:0;
       font-family:Poppins,system-ui,-apple-system,Segoe UI,Roboto,"Helvetica Neue",Arial,"Noto Sans","Apple Color Emoji","Segoe UI Emoji","Segoe UI Symbol",sans-serif;
-      color:var(--text);
-      background:radial-gradient(1200px 600px at 10% -10%, #EAF6FF 0%, transparent 50%),
-                 radial-gradient(1000px 600px at 110% 0%, #FFF3F3 0%, transparent 60%),
-                 var(--bg);
+      color:var(--text-color);
+      background-color: var(--bg);
+      background-image:radial-gradient(1200px 600px at 10% -10%, rgba(184,225,255,.1) 0%, transparent 50%),
+                 radial-gradient(1000px 600px at 110% 0%, rgba(255,214,224,.1) 0%, transparent 60%);
       line-height:1.4;
+      transition: background-color .3s ease, color .3s ease;
     }
 
     /* Loader */
@@ -61,25 +77,36 @@ Caso fijo: media de llegada 3 min (exponencial) y servicio uniforme [2,4] con 6 
 
     .container{max-width:1200px;margin:0 auto;padding:24px 16px 64px;opacity:0;transform:scale(.985);transition:opacity .6s ease, transform .6s ease}
     .container.ready{opacity:1; transform:scale(1)}
-    header.hero{padding:32px 20px 28px;border-radius:calc(var(--radius) + 8px);
+    header.hero{position:relative; padding:32px 20px 28px;border-radius:calc(var(--radius) + 8px);
       background:linear-gradient(135deg, rgba(184,225,255,.45), rgba(255,214,224,.45));
       box-shadow:var(--shadow);}
     .badge{display:inline-flex;align-items:center;gap:.5ch;padding:8px 12px;border-radius:999px;font-weight:600;
       background:var(--accent-5);box-shadow:var(--shadow-soft);font-size:.9rem}
+    body.dark-mode .badge { color: #1f2937; }
     .callout{margin-top:10px;background:rgba(255,255,255,.72);border:1px dashed rgba(0,0,0,.06);
       border-radius:12px;padding:12px 14px;box-shadow:var(--shadow-soft);font-size:.98rem}
+    body.dark-mode .callout{background:rgba(0,0,0,.15); border-color:rgba(255,255,255,.1);}
+
+    #theme-toggle{
+      position:absolute; top:16px; right:16px; z-index:10;
+      width:40px; height:40px; border-radius:50%;
+      border:0; background:var(--glass-bg); color: var(--text-color);
+      display:grid; place-items:center; font-size:1.2rem;
+      box-shadow:var(--shadow-soft); cursor:pointer;
+    }
 
     .controls{margin-top:14px;display:flex;flex-wrap:wrap;gap:12px;align-items:flex-end}
-    .segmented{display:inline-flex;border-radius:999px;background:var(--bg-glass);box-shadow:var(--shadow-soft);overflow:hidden}
+    .segmented{display:inline-flex;border-radius:999px;background:var(--glass-bg);box-shadow:var(--shadow-soft);overflow:hidden}
     .segmented input{display:none}
-    .segmented label{padding:10px 14px;cursor:pointer;font-weight:600;color:#374151}
-    .segmented input:checked + label{background:white;border-radius:999px;box-shadow:var(--shadow-soft)}
+    .segmented label{padding:10px 14px;cursor:pointer;font-weight:600;color:var(--muted-color)}
+    .segmented input:checked + label{background:var(--card-bg); color: var(--text-color); border-radius:999px;box-shadow:var(--shadow-soft)}
     .inputs{display:flex;gap:12px;flex-wrap:wrap;align-items:flex-end}
     .field{display:flex;flex-direction:column;gap:6px;min-width:280px}
-    .field label{font-size:.9rem;font-weight:600;color:#374151}
-    .hint{font-size:.8rem;color:#6b7280}
+    .field label{font-size:.9rem;font-weight:600;color:var(--muted-color)}
+    .hint{font-size:.8rem;color:var(--muted-color)}
     .inputs input[type="text"]{min-width:260px;max-width:520px;width:100%;padding:10px 12px;border-radius:10px;
-      border:1px solid #e5e7eb;background:rgba(255,255,255,.9);box-shadow:var(--shadow-soft)}
+      border:1px solid var(--border-color);background:rgba(255,255,255,.9);box-shadow:var(--shadow-soft)}
+    body.dark-mode .inputs input[type="text"]{background:rgba(0,0,0,.25); color:var(--text-color);}
     button.primary{border:0;border-radius:999px;padding:12px 18px;font-weight:700;
       background:linear-gradient(135deg,var(--accent-3),var(--accent-1));
       box-shadow:var(--shadow);cursor:pointer}
@@ -101,8 +128,9 @@ Caso fijo: media de llegada 3 min (exponencial) y servicio uniforme [2,4] con 6 
     .grid-bottom > .card{ min-width:0; }
 
     /* Tarjetas “altas” con layout vertical y alturas coordinadas */
-    .card{background:var(--card);backdrop-filter:blur(8px);border:1px solid rgba(255,255,255,.6);
+    .card{background:var(--card-bg);backdrop-filter:blur(8px);border:1px solid rgba(255,255,255,.6);
       border-radius:var(--radius);box-shadow:var(--shadow);padding:16px}
+    body.dark-mode .card{border-color:rgba(255,255,255,.1);}
     .card.tall{display:flex;flex-direction:column;min-height:420px;padding:18px}
     .grid-bottom .card.tall h3{ margin:4px 0 10px; }
 
@@ -121,10 +149,15 @@ Caso fijo: media de llegada 3 min (exponencial) y servicio uniforme [2,4] con 6 
       -webkit-background-clip:text;background-clip:text;color:transparent}
 
     .chips{display:flex;flex-wrap:wrap;gap:8px;margin-top:6px}
-    .chip{padding:6px 10px;border-radius:999px;font-weight:600;background:white;border:1px dashed rgba(0,0,0,.06);
-      box-shadow:var(--shadow-soft);font-size:.9rem}
+    .chip{padding:6px 10px;border-radius:999px;font-weight:600;border:1px dashed rgba(0,0,0,.06);
+      box-shadow:var(--shadow-soft);font-size:.9rem; background: var(--card-bg);}
+    #chips-ua .chip:nth-child(even) { background: #FFFAF0; }
+    #chips-us .chip:nth-child(even) { background: #F1FFF5; }
+    body.dark-mode .chip{background:var(--card-bg); border-color:rgba(255,255,255,.1);}
+    body.dark-mode #chips-ua .chip:nth-child(even) { background: var(--glass-bg); }
+    body.dark-mode #chips-us .chip:nth-child(even) { background: var(--glass-bg); }
 
-    footer{margin-top:26px;text-align:center;color:#6b7280;font-size:.92rem}
+    footer{margin-top:26px;text-align:center;color:var(--muted-color);font-size:.92rem}
 
     /* Toast */
     #toast{position:fixed;right:16px;bottom:16px;max-width: min(92vw, 460px);
@@ -142,43 +175,43 @@ Caso fijo: media de llegada 3 min (exponencial) y servicio uniforme [2,4] con 6 
     }
     .table-wrap thead th{
       position:sticky; top:0;
-      background:#f8fafc;
+      background:var(--table-header-bg);
       padding:12px 14px;
       font-weight:700;
-      color:#334155;
+      color:var(--muted-color);
       text-align:left;
       z-index:1;
-      border-bottom:1px solid #e5e7eb;
+      border-bottom:1px solid var(--border-color);
     }
     .table-wrap tbody td{
-      background:#ffffff;
+      background:var(--card-bg);
       padding:14px 14px;
-      border-top:1px solid #eef2f7;
-      border-bottom:1px solid #eef2f7;
+      border-top:1px solid var(--border-color);
+      border-bottom:1px solid var(--border-color);
       font-size:1rem;
       line-height:1.2;
       transition:background .2s ease, box-shadow .2s ease, transform .2s ease;
     }
     .table-wrap tbody tr td:first-child{
-      border-left:1px solid #eef2f7;
+      border-left:1px solid var(--border-color);
       border-top-left-radius:14px;
       border-bottom-left-radius:14px;
       font-weight:700;
     }
     .table-wrap tbody tr td:last-child{
-      border-right:1px solid #eef2f7;
+      border-right:1px solid var(--border-color);
       border-top-right-radius:14px;
       border-bottom-right-radius:14px;
     }
     .table-wrap tbody tr:hover td{
-      background:#f9fbff;
+      background:var(--table-row-hover-bg);
       box-shadow:0 6px 18px rgba(15,23,42,.06);
       transform:translateY(-1px);
     }
     .table-wrap td.num{ text-align:right; white-space:nowrap }
     .cell-num{ display:inline-flex; gap:6px; align-items:baseline }
     .cell-num .v{ font-variant-numeric:tabular-nums }
-    .cell-num .u{ font-size:.85em; color:#6b7280 }
+    .cell-num .u{ font-size:.85em; color:var(--muted-color) }
     @media (max-width: 560px){
       .table-wrap thead th:nth-child(3),
       .table-wrap tbody td:nth-child(3){ display:none }
@@ -202,6 +235,7 @@ Caso fijo: media de llegada 3 min (exponencial) y servicio uniforme [2,4] con 6 
 
   <div class="container" id="app">
     <header class="hero">
+      <button id="theme-toggle" title="Cambiar tema">🌙</button>
       <span class="badge">Integrantes: Maria Olivero Mahecha - Samuel Esteban Villalba Duran</span>
       <h1>Simulación de Panadería (Caso Fijo)</h1>
       <p>Cola de un solo servidor. Llegadas ∼ Exponencial (media 3&nbsp;min) y servicio ∼ Uniforme [2,4]. Simulamos 6 clientes.</p>
@@ -219,20 +253,34 @@ Caso fijo: media de llegada 3 min (exponencial) y servicio uniforme [2,4] con 6 
           <label for="modo-aleatorio">Aleatorio</label>
         </div>
 
-        <div class="inputs" id="manual-inputs" aria-live="polite">
-          <div class="field">
-            <label for="uLlegadas">U <em>(llegadas)</em> — Exponencial (media 3&nbsp;min)</label>
-            <input id="uLlegadas" type="text"
-              placeholder="6 valores entre 0 y 1, separados por coma"
-              value="0.50,0.60,0.20,0.80,0.70,0.60" />
-            <div class="hint">Se usan para calcular interarribos: λ = −3·ln(U)</div>
+        <div id="manual-inputs-container">
+          <div class="inputs" id="manual-inputs-params" aria-live="polite">
+            <div class="field">
+              <label for="mediaLlegadas">Media de llegadas (λ)</label>
+              <input id="mediaLlegadas" type="text" value="3" inputmode="numeric" />
+              <div class="hint">Tiempo promedio entre llegadas de clientes.</div>
+            </div>
+            <div class="field">
+              <label for="uniformeServicio">Servicio Uniforme [A, B]</label>
+              <input id="uniformeServicio" type="text" value="2,4" />
+              <div class="hint">Rango de tiempo de servicio [mín, máx].</div>
+            </div>
           </div>
-          <div class="field">
-            <label for="uServicio">U <em>(servicio)</em> — Uniforme [2,4]</label>
-            <input id="uServicio" type="text"
-              placeholder="6 valores entre 0 y 1, separados por coma"
-              value="0.30,0.80,0.60,0.50,0.20,0.80" />
-            <div class="hint">Se usan para calcular: S = 2 + (4 − 2)·U</div>
+          <div class="inputs" id="manual-inputs-u" aria-live="polite" style="margin-top: 12px;">
+            <div class="field">
+              <label for="uLlegadas">U <em>(llegadas)</em> — Exponencial</label>
+              <input id="uLlegadas" type="text"
+                placeholder="6 valores entre 0 y 1, separados por coma"
+                value="0.50,0.60,0.20,0.80,0.70,0.60" />
+              <div class="hint">Se usan para calcular interarribos: T = -λ·ln(U)</div>
+            </div>
+            <div class="field">
+              <label for="uServicio">U <em>(servicio)</em> — Uniforme</label>
+              <input id="uServicio" type="text"
+                placeholder="6 valores entre 0 y 1, separados por coma"
+                value="0.30,0.80,0.60,0.50,0.20,0.80" />
+              <div class="hint">Se usan para calcular: S = A + (B - A)·U</div>
+            </div>
           </div>
         </div>
 
@@ -254,6 +302,14 @@ Caso fijo: media de llegada 3 min (exponencial) y servicio uniforme [2,4] con 6 
         <h3>Secuencias U</h3>
         <p>Llegadas</p><div id="chips-ua" class="chips" aria-label="Secuencia U llegadas"></div>
         <p>Servicio</p><div id="chips-us" class="chips" aria-label="Secuencia U servicio"></div>
+      </article>
+    </section>
+
+    <!-- Gráficos Principales -->
+    <section class="grid-top">
+      <article class="card">
+        <h3>Llegada vs. Espera (Evolución)</h3>
+        <canvas id="line-chart" aria-label="Gráfico de línea de tiempo de llegada y tiempo de espera por cliente" style="height:240px"></canvas>
       </article>
       <article class="card">
         <h3>Sparkline espera</h3>
@@ -287,7 +343,7 @@ Caso fijo: media de llegada 3 min (exponencial) y servicio uniforme [2,4] con 6 
         <h3>Monte Carlo</h3>
 
         <!-- Letreros simples -->
-        <div style="display:grid;gap:6px;margin-bottom:10px;font-size:.92rem;color:#374151">
+        <div style="display:grid;gap:6px;margin-bottom:10px;font-size:.92rem;color:var(--muted-color)">
           <div><strong>Media</strong> = <em>tendencia central</em> (qué esperar en promedio).</div>
           <div><strong>DE</strong> = <em>dispersión</em> (qué tan estables o variables son los resultados).</div>
           <div><strong>Histograma</strong> = <em>foto completa</em> de la distribución.</div>
@@ -324,7 +380,7 @@ Caso fijo: media de llegada 3 min (exponencial) y servicio uniforme [2,4] con 6 
   <!-- Toast -->
   <div id="toast" role="status" aria-live="polite"></div>
 
-  <script defer>
+<script defer>
   // -------------------- Utilidades --------------------
   const nf = new Intl.NumberFormat('es-ES',{minimumFractionDigits:2, maximumFractionDigits:2});
   const r2 = x => Math.round((Number(x) + Number.EPSILON) * 100) / 100;
@@ -335,10 +391,11 @@ Caso fijo: media de llegada 3 min (exponencial) y servicio uniforme [2,4] con 6 
   // Caso fijo (panadería)
   const defaultUA = [0.50,0.60,0.20,0.80,0.70,0.60];
   const defaultUS = [0.30,0.80,0.60,0.50,0.20,0.80];
-  const LAMBDA = 3; // media de llegadas
-  const A = 2, B = 4; // servicio uniforme [2,4]
 
+  // Variables de estado globales
   let lastData = null;
+  let monteCarloAvgs = null;
+  let monteCarloStats = null;
   let loadStarted = performance.now();
 
   // Toast
@@ -365,49 +422,38 @@ Caso fijo: media de llegada 3 min (exponencial) y servicio uniforme [2,4] con 6 
     return vals.slice(0,N).map(clampU);
   }
 
-  function chips(container, arr, palette){
+  function chips(container, arr){
     container.innerHTML = '';
-    const colors = palette || Array(N).fill('#fff');
     arr.forEach((v,i)=>{
       const d = document.createElement('span');
       d.className = 'chip';
-      d.style.background = colors[i % colors.length];
       d.textContent = nf.format(Math.round(v*100)/100);
       container.appendChild(d);
     });
   }
 
   // -------------------- Generación de datos --------------------
-  function generateData(mode, UA, US){
+  function generateData(mode, UA, US, lambda, a, b){
     let uA = [], uS = [];
     if(mode === 'manual'){
       uA = (UA && UA.length === N) ? UA : defaultUA.slice();
       uS = (US && US.length === N) ? US : defaultUS.slice();
     }else{
-      // Aleatorio en [0.1, 0.9]
       for(let i=0;i<N;i++){
-        const a = 0.1 + Math.random()*0.8;
-        const b = 0.1 + Math.random()*0.8;
-        uA.push(Number(a.toFixed(2)));
-        uS.push(Number(b.toFixed(2)));
+        const u_a = 0.1 + Math.random()*0.8;
+        const u_b = 0.1 + Math.random()*0.8;
+        uA.push(Number(u_a.toFixed(2)));
+        uS.push(Number(u_b.toFixed(2)));
       }
       uA = uA.map(clampU); uS = uS.map(clampU);
     }
-
-    // Interarribos: T = -λ ln(U)
-    const inter = uA.map(u => r2(-LAMBDA * Math.log(u)));
-
-    // Llegadas acumuladas
+    const inter = uA.map(u => r2(-lambda * Math.log(u)));
     const llegada = inter.reduce((acc,val,i)=>{
       if(i===0) acc.push(val);
       else acc.push(r2(acc[i-1] + val));
       return acc;
     },[]);
-
-    // Servicio (Uniforme [2,4]): S = 2 + 2U
-    const servicio = uS.map(u => r2(A + (B - A)*u));
-
-    // FIFO 1 servidor
+    const servicio = uS.map(u => r2(a + (b - a)*u));
     const inicio = []; const fin = []; const espera = [];
     for(let i=0;i<N;i++){
       const prevFin = i>0 ? fin[i-1] : 0;
@@ -415,7 +461,6 @@ Caso fijo: media de llegada 3 min (exponencial) y servicio uniforme [2,4] con 6 
       fin[i]    = r2(inicio[i] + servicio[i]);
       espera[i] = r2(inicio[i] - llegada[i]);
     }
-
     return { uA, uS, inter, llegada, servicio, inicio, fin, espera };
   }
 
@@ -423,10 +468,8 @@ Caso fijo: media de llegada 3 min (exponencial) y servicio uniforme [2,4] con 6 
   function buildTable(data){
     const tb = document.getElementById('tbody');
     tb.innerHTML = '';
-
     const numCell = (x) =>
       `<span class="cell-num"><span class="v">${nf.format(r2(x))}</span><span class="u">min</span></span>`;
-
     for(let i=0;i<N;i++){
       const tr = document.createElement('tr');
       const cellsHTML = [
@@ -462,7 +505,6 @@ Caso fijo: media de llegada 3 min (exponencial) y servicio uniforme [2,4] con 6 
     document.getElementById('avgWait').textContent = `${nf.format(avg)} min`;
     document.getElementById('maxWait').textContent =
       `Mayor espera: Cliente ${idx+1} con ${nf.format(max)} min`;
-
     const parts = data.espera.map(v=>nf.format(v)).join(' + ');
     document.getElementById('avgCalc').textContent =
       `Cálculo: (${parts}) / ${N} = ${nf.format(avg)} min`;
@@ -482,30 +524,36 @@ Caso fijo: media de llegada 3 min (exponencial) y servicio uniforme [2,4] con 6 
     return {ctx, W:rect.width, H:rect.height, dpr};
   }
 
+  function getThemeColors() {
+    const style = getComputedStyle(document.body);
+    return {
+      text: style.getPropertyValue('--text-color'),
+      muted: style.getPropertyValue('--muted-color'),
+      border: style.getPropertyValue('--border-color'),
+      ganttWait: style.getPropertyValue('--gantt-wait-bg'),
+      ganttService: style.getPropertyValue('--gantt-service-bg'),
+      histBar: style.getPropertyValue('--hist-bar-bg'),
+    };
+  }
+
   // -------------------- Gráficos --------------------
   function drawSparkline(data){
     const cvs = document.getElementById('spark');
     const {ctx, W, H} = ensureHiDPICanvas(cvs);
+    const colors = getThemeColors();
     ctx.clearRect(0,0,W,H);
-
     const waits = data.espera;
     const pad = 32;
     const max = Math.max(...waits, 1);
     const stepX = (W - pad*2) / Math.max(1,(waits.length - 1));
-
-    // Ejes
-    ctx.strokeStyle = '#e5e7eb'; ctx.lineWidth = 1;
+    ctx.strokeStyle = colors.border; ctx.lineWidth = 1;
     ctx.beginPath();
     ctx.moveTo(pad, H - pad); ctx.lineTo(W - pad, H - pad);
     ctx.moveTo(pad, pad);     ctx.lineTo(pad, H - pad);
     ctx.stroke();
-
-    // Labels Y (0 y máx)
-    ctx.fillStyle = '#6b7280'; ctx.font='12px Poppins'; ctx.textAlign='right';
+    ctx.fillStyle = colors.muted; ctx.font='12px Poppins'; ctx.textAlign='right';
     ctx.fillText("0", pad-6, H - pad+4);
     ctx.fillText(`${nf.format(r2(max))}`, pad-6, pad+4);
-
-    // Línea de promedio
     const avg = waits.reduce((a,b)=>a+b,0)/waits.length;
     const yAvg = H - pad - (avg/max)*(H - pad*2);
     ctx.strokeStyle = '#10b981';
@@ -513,8 +561,6 @@ Caso fijo: media de llegada 3 min (exponencial) y servicio uniforme [2,4] con 6 
     ctx.beginPath(); ctx.moveTo(pad, yAvg); ctx.lineTo(W - pad, yAvg); ctx.stroke();
     ctx.setLineDash([]);
     ctx.textAlign = 'right'; ctx.fillText(`Prom ${nf.format(r2(avg))}`, W - pad, yAvg - 6);
-
-    // Área
     ctx.beginPath();
     waits.forEach((v,i)=>{
       const x = pad + i*stepX;
@@ -523,8 +569,6 @@ Caso fijo: media de llegada 3 min (exponencial) y servicio uniforme [2,4] con 6 
     });
     ctx.lineTo(W - pad, H - pad); ctx.lineTo(pad, H - pad); ctx.closePath();
     ctx.fillStyle = 'rgba(59,130,246,0.2)'; ctx.fill();
-
-    // Línea
     ctx.lineWidth = 2.5; ctx.strokeStyle = '#3b82f6';
     ctx.beginPath();
     waits.forEach((v,i)=>{
@@ -533,8 +577,6 @@ Caso fijo: media de llegada 3 min (exponencial) y servicio uniforme [2,4] con 6 
       if(i===0) ctx.moveTo(x,y); else ctx.lineTo(x,y);
     });
     ctx.stroke();
-
-    // Puntos para tooltip
     ctx.fillStyle = '#2563eb';
     const pts = [];
     waits.forEach((v,i)=>{
@@ -544,10 +586,77 @@ Caso fijo: media de llegada 3 min (exponencial) y servicio uniforme [2,4] con 6 
       pts.push({x,y,i,val:v});
     });
     cvs._pts = pts;
-
-    // Eje X (clientes)
-    ctx.textAlign = 'center'; ctx.fillStyle = '#6b7280';
+    ctx.textAlign = 'center'; ctx.fillStyle = colors.muted;
     waits.forEach((_,i)=> ctx.fillText(`C${i+1}`, pad + i*stepX, H - pad + 16));
+  }
+
+  function drawLineChart(data) {
+    const cvs = document.getElementById('line-chart');
+    const {ctx, W, H} = ensureHiDPICanvas(cvs);
+    const colors = getThemeColors();
+    ctx.clearRect(0,0,W,H);
+    const llegadas = data.llegada;
+    const esperas = data.espera;
+    const labels = Array.from({length: N}, (_, i) => `C${i+1}`);
+    const padL = 48, padR = 16, padT = 40, padB = 40;
+    const yMax = Math.max(...llegadas, ...esperas, 1);
+    const xScale = i => padL + i * ((W - padL - padR) / Math.max(1, N - 1));
+    const yScale = val => H - padB - (val / yMax) * (H - padT - padB);
+    ctx.strokeStyle = colors.border; ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(padL, H - padB); ctx.lineTo(W - padR, H - padB);
+    ctx.moveTo(padL, padT);     ctx.lineTo(padL, H - padB);
+    ctx.stroke();
+    ctx.fillStyle = colors.muted; ctx.font='12px Poppins';
+    ctx.textAlign='right';
+    ctx.fillText("0", padL-6, H - padB + 4);
+    ctx.fillText(nf.format(r2(yMax)), padL-6, padT - 4);
+    ctx.save();
+    ctx.translate(16, H/2);
+    ctx.rotate(-Math.PI/2);
+    ctx.textAlign = 'center';
+    ctx.fillText("Tiempo (min)", 0, 0);
+    ctx.restore();
+    ctx.textAlign = 'center';
+    labels.forEach((label, i) => {
+        ctx.fillText(label, xScale(i), H - padB + 18);
+    });
+    ctx.textAlign = 'left';
+    ctx.fillStyle = '#3b82f6';
+    ctx.fillRect(padL, 8, 12, 12);
+    ctx.fillStyle = colors.text;
+    ctx.fillText("Llegada", padL + 18, 18);
+    ctx.fillStyle = '#ef4444';
+    ctx.fillRect(padL + 100, 8, 12, 12);
+    ctx.fillStyle = colors.text;
+    ctx.fillText("Espera", padL + 118, 18);
+    const drawSeries = (dataset, color) => {
+        ctx.strokeStyle = color;
+        ctx.fillStyle = color;
+        ctx.lineWidth = 2.5;
+        ctx.beginPath();
+        dataset.forEach((val, i) => {
+            const x = xScale(i);
+            const y = yScale(val);
+            if (i === 0) ctx.moveTo(x, y);
+            else ctx.lineTo(x, y);
+        });
+        ctx.stroke();
+        dataset.forEach((val, i) => {
+            const x = xScale(i);
+            const y = yScale(val);
+            ctx.beginPath();
+            ctx.arc(x, y, 4.5, 0, Math.PI * 2);
+            ctx.fill();
+        });
+    };
+    drawSeries(llegadas, '#3b82f6');
+    drawSeries(esperas, '#ef4444');
+    const pts = [];
+    for(let i=0; i<N; i++) {
+        pts.push({ x: xScale(i), i: i, llegada: llegadas[i], espera: esperas[i] });
+    }
+    cvs._pts = pts;
   }
 
   // Tooltip compartido
@@ -566,7 +675,6 @@ Caso fijo: media de llegada 3 min (exponencial) y servicio uniforme [2,4] con 6 
   tooltip.setAttribute('aria-live','polite');
   document.body.appendChild(tooltip);
 
-  // Tooltip para sparkline
   (function attachSparkTooltip(){
     const cvs = document.getElementById('spark');
     cvs.addEventListener('mousemove', ev=>{
@@ -587,64 +695,72 @@ Caso fijo: media de llegada 3 min (exponencial) y servicio uniforme [2,4] con 6 
     cvs.addEventListener('mouseleave', ()=> tooltip.style.opacity='0');
   })();
 
-  // Gantt
+  (function attachLineChartTooltip(){
+    const cvs = document.getElementById('line-chart');
+    cvs.addEventListener('mousemove', ev=>{
+      if(!lastData || !cvs._pts) return;
+      const rect = cvs.getBoundingClientRect();
+      const x = ev.clientX - rect.left;
+      const hit = cvs._pts.reduce((best, p) => {
+          const dist = Math.abs(x - p.x);
+          return dist < best.dist ? {dist, p} : best;
+      }, {dist: Infinity, p: null}).p;
+      if(hit && Math.abs(x - hit.x) < 12){
+        tooltip.innerHTML = `<strong>Cliente ${hit.i+1}</strong><br>Llegada: ${fmt(hit.llegada)}<br>Espera: ${fmt(hit.espera)}`;
+        tooltip.style.left = (ev.clientX + 12) + 'px';
+        tooltip.style.top  = (ev.clientY + 12) + 'px';
+        tooltip.style.opacity = '1';
+      }else{
+        tooltip.style.opacity = '0';
+      }
+    });
+    cvs.addEventListener('mouseleave', ()=> tooltip.style.opacity='0');
+  })();
+
   function drawGantt(data){
     const cvs = document.getElementById('gantt');
     const {ctx, W, H} = ensureHiDPICanvas(cvs);
+    const colors = getThemeColors();
     ctx.clearRect(0,0,W,H);
-
-    // Márgenes internos
     const padL = 56, padR = 24, padT = 20, padB = 32;
     const innerW = Math.max(1, W - padL - padR);
     const innerH = Math.max(1, H - padT - padB);
-
     const rows = N;
     const rowH = innerH / rows;
     const tMin = 0;
     const tMax = Math.max(...data.fin);
     const span = Math.max(1e-6, tMax - tMin);
-
     const xScale = (t) => padL + (t - tMin) / span * innerW;
-
-    // Ticks verticales adaptativos
     const tickCount = Math.max(3, Math.min(8, Math.round(innerW / 140)));
-    ctx.strokeStyle = '#e5e7eb'; ctx.lineWidth = 1; ctx.setLineDash([2,4]);
+    ctx.strokeStyle = colors.border; ctx.lineWidth = 1; ctx.setLineDash([2,4]);
     for(let g=0; g<=tickCount; g++){
       const t = tMin + g * (span / tickCount);
       const x = xScale(t);
       ctx.beginPath(); ctx.moveTo(x, padT - 6); ctx.lineTo(x, H - padB + 6); ctx.stroke();
-
-      // etiqueta de tiempo
-      ctx.setLineDash([]); ctx.fillStyle = '#6b7280'; ctx.font = '12px Poppins';
+      ctx.setLineDash([]); ctx.fillStyle = colors.muted;
       ctx.textAlign = 'center'; ctx.fillText(nf.format(r2(t)), x, H - padB + 18);
       ctx.setLineDash([2,4]);
     }
     ctx.setLineDash([]);
-
-    // Etiquetas de filas (C1..C6)
-    ctx.fillStyle = '#94a3b8'; ctx.textAlign = 'left'; ctx.font = '12px Poppins';
+    ctx.fillStyle = colors.muted; ctx.textAlign = 'left'; ctx.font = '12px Poppins';
     for(let i=0;i<rows;i++){
       const yMid = padT + i*rowH + rowH*0.65;
       ctx.fillText(`C${i+1}`, 12, yMid);
     }
-
-    // barras + hitboxes
     cvs._boxes = [];
     for(let i=0;i<rows;i++){
       const y = padT + i*rowH + rowH*0.2;
       const h = rowH*0.6;
-
       if(data.espera[i] > 0){
         const wx1 = xScale(data.llegada[i]);
         const wx2 = xScale(data.inicio[i]);
-        ctx.fillStyle = '#FFD6E0';
+        ctx.fillStyle = colors.ganttWait;
         roundRect(ctx, wx1, y, wx2 - wx1, h, 10); ctx.fill();
         cvs._boxes.push({x:wx1,y,h,w:(wx2-wx1), i, type:'espera'});
       }
-
       const sx1 = xScale(data.inicio[i]);
       const sx2 = xScale(data.fin[i]);
-      ctx.fillStyle = '#B8E1FF';
+      ctx.fillStyle = colors.ganttService;
       roundRect(ctx, sx1, y, sx2 - sx1, h, 10); ctx.fill();
       cvs._boxes.push({x:sx1,y,h,w:(sx2-sx1), i, type:'servicio'});
     }
@@ -672,12 +788,22 @@ Caso fijo: media de llegada 3 min (exponencial) y servicio uniforme [2,4] con 6 
   document.getElementById('runMC').addEventListener('click', ()=>{
     try{
       const k = parseK(document.getElementById('replicas').value);
+      const mediaLlegadas = parseFloat(document.getElementById('mediaLlegadas').value);
+      const uniformeServicio = document.getElementById('uniformeServicio').value.split(',').map(s => parseFloat(s.trim()));
+      if (!Number.isFinite(mediaLlegadas) || mediaLlegadas <= 0) {
+        throw new Error('La media de llegadas debe ser un número positivo.');
+      }
+      if (uniformeServicio.length !== 2 || !uniformeServicio.every(Number.isFinite) || uniformeServicio[0] >= uniformeServicio[1]) {
+        throw new Error('El servicio uniforme debe ser [A, B] con A < B.');
+      }
+      const A = uniformeServicio[0];
+      const B = uniformeServicio[1];
 
       const avgs = [];
       for(let r=0;r<k;r++){
         const uA = Array.from({length:N}, ()=> clampU(0.1 + Math.random()*0.8));
         const uS = Array.from({length:N}, ()=> clampU(0.1 + Math.random()*0.8));
-        const inter = uA.map(u => r2(-LAMBDA * Math.log(u)));
+        const inter = uA.map(u => r2(-mediaLlegadas * Math.log(u)));
         const llegada = inter.reduce((acc,val,i)=> (i? acc.concat(r2(acc[i-1]+val)) : [val]), []);
         const servicio = uS.map(u => r2(A + (B - A)*u));
         const inicio = [], fin = [], espera = [];
@@ -692,6 +818,10 @@ Caso fijo: media de llegada 3 min (exponencial) y servicio uniforme [2,4] con 6 
 
       const mean = avgs.reduce((a,b)=>a+b,0)/k;
       const sd = Math.sqrt(avgs.reduce((a,b)=> a + Math.pow(b-mean,2),0)/(k-1 || 1));
+      
+      monteCarloAvgs = avgs; // Guardar para redibujar
+      monteCarloStats = { mean, sd }; // Guardar para redibujar
+
       document.getElementById('mcStats').textContent =
         `Media(${k}) = ${nf.format(r2(mean))} min · DE = ${nf.format(r2(sd))} min`;
 
@@ -705,6 +835,7 @@ Caso fijo: media de llegada 3 min (exponencial) y servicio uniforme [2,4] con 6 
   function drawHistogram(data, mean, sd){
     const cvs = document.getElementById('hist');
     const {ctx, W, H} = ensureHiDPICanvas(cvs);
+    const colors = getThemeColors();
     ctx.clearRect(0,0,W,H);
     if(!data.length) return;
 
@@ -724,14 +855,14 @@ Caso fijo: media de llegada 3 min (exponencial) y servicio uniforme [2,4] con 6 
     const yMax = Math.max(...counts, 1);
 
     // Ejes
-    ctx.strokeStyle = '#e5e7eb'; ctx.lineWidth = 1;
+    ctx.strokeStyle = colors.border; ctx.lineWidth = 1;
     ctx.beginPath();
     ctx.moveTo(padL, H - padB); ctx.lineTo(W - padR, H - padB);
     ctx.moveTo(padL, padT);     ctx.lineTo(padL, H - padB);
     ctx.stroke();
 
     // Ticks X (mín, media, máx)
-    ctx.fillStyle = '#6b7280'; ctx.font = '12px Poppins'; ctx.textAlign = 'center';
+    ctx.fillStyle = colors.muted; ctx.font = '12px Poppins'; ctx.textAlign = 'center';
     const xScale = v => padL + (v - min)/span * innerW;
     ctx.fillText(nf.format(r2(min)),  xScale(min),  H - padB + 18);
     ctx.fillText(nf.format(r2(mean)), xScale(mean), H - padB + 18);
@@ -752,7 +883,7 @@ Caso fijo: media de llegada 3 min (exponencial) y servicio uniforme [2,4] con 6 
       const x = padL + i*bw + 2;
       const y = H - padB - h;
       const w = Math.max(2, bw - 4);
-      ctx.fillStyle = '#B8E1FF';
+      ctx.fillStyle = colors.histBar;
       roundRect(ctx, x, y, w, h, Math.min(10, w/3));
       ctx.fill();
       cvs._bins.push({x,y,w,h,count:c,from:edges[i],to:edges[i+1]});
@@ -769,7 +900,7 @@ Caso fijo: media de llegada 3 min (exponencial) y servicio uniforme [2,4] con 6 
     drawKDE(ctx, data, {xScale, padT, padB, innerH});
 
     // Etiqueta Y (máx)
-    ctx.fillStyle = '#6b7280'; ctx.textAlign = 'right';
+    ctx.fillStyle = colors.muted; ctx.textAlign = 'right';
     ctx.fillText(yMax.toString(), padL - 6, padT + 10);
 
     // Tooltip
@@ -863,6 +994,7 @@ Caso fijo: media de llegada 3 min (exponencial) y servicio uniforme [2,4] con 6 
     if(!lastData) return;
     drawSparkline(lastData);
     drawGantt(lastData);
+    drawLineChart(lastData);
   }
   const ro = new ResizeObserver(()=> requestAnimationFrame(redrawOnResize));
   ro.observe(document.getElementById('app'));
@@ -872,21 +1004,31 @@ Caso fijo: media de llegada 3 min (exponencial) y servicio uniforme [2,4] con 6 
     try{
       const mode = document.querySelector('input[name="modo"]:checked')?.value || 'manual';
       let UA, US;
+      const mediaLlegadas = parseFloat(document.getElementById('mediaLlegadas').value);
+      const uniformeServicio = document.getElementById('uniformeServicio').value.split(',').map(s => parseFloat(s.trim()));
+      if (!Number.isFinite(mediaLlegadas) || mediaLlegadas <= 0) {
+        throw new Error('La media de llegadas debe ser un número positivo.');
+      }
+      if (uniformeServicio.length !== 2 || !uniformeServicio.every(Number.isFinite) || uniformeServicio[0] >= uniformeServicio[1]) {
+        throw new Error('El servicio uniforme debe ser [A, B] con A < B.');
+      }
+      const A = uniformeServicio[0];
+      const B = uniformeServicio[1];
+
       if(mode==='manual'){
         UA = parseUInput(document.getElementById('uLlegadas').value);
         US = parseUInput(document.getElementById('uServicio').value);
       }
       loadStarted = performance.now();
-      const data = generateData(mode, UA, US);
+      const data = generateData(mode, UA, US, mediaLlegadas, A, B);
       lastData = data;
 
       // UI
-      chips(document.getElementById('chips-ua'), data.uA, ['#fff','#FFFAF0','#fff','#FFFAF0','#fff','#FFFAF0']);
-      chips(document.getElementById('chips-us'), data.uS, ['#fff','#F1FFF5','#fff','#F1FFF5','#fff','#F1FFF5']);
+      chips(document.getElementById('chips-ua'), data.uA);
+      chips(document.getElementById('chips-us'), data.uS);
       buildTable(data);
       showMetrics(data);
-      drawSparkline(data);
-      drawGantt(data);
+      redrawOnResize();
 
       // Quitar loader con una duración mínima agradable
       const minDuration = 1200;
@@ -906,10 +1048,10 @@ Caso fijo: media de llegada 3 min (exponencial) y servicio uniforme [2,4] con 6 
 
   // Toggle inputs
   document.getElementById('modo-aleatorio').addEventListener('change', ()=>{
-    document.getElementById('manual-inputs').hidden = true;
+    document.getElementById('manual-inputs-container').hidden = true;
   });
   document.getElementById('modo-manual').addEventListener('change', ()=>{
-    document.getElementById('manual-inputs').hidden = false;
+    document.getElementById('manual-inputs-container').hidden = false;
     document.getElementById('uLlegadas').focus();
   });
 
@@ -926,8 +1068,38 @@ Caso fijo: media de llegada 3 min (exponencial) y servicio uniforme [2,4] con 6 
     });
   });
 
-  // Primera corrida
+  // --- Lógica de Arranque ---
+  (function() {
+    const themeToggle = document.getElementById('theme-toggle');
+    const body = document.body;
+    const applyTheme = (theme) => {
+      body.classList.remove('dark-mode');
+      if (theme === 'dark') {
+        body.classList.add('dark-mode');
+        themeToggle.textContent = '☀️';
+      } else {
+        themeToggle.textContent = '🌙';
+      }
+    };
+    themeToggle.addEventListener('click', () => {
+      const newTheme = body.classList.contains('dark-mode') ? 'light' : 'dark';
+      applyTheme(newTheme);
+      localStorage.setItem('theme', newTheme);
+      if (lastData) {
+        redrawOnResize();
+        if (monteCarloAvgs) {
+          const {mean, sd} = monteCarloStats;
+          drawHistogram(monteCarloAvgs, mean, sd);
+        }
+      }
+    });
+    const savedTheme = localStorage.getItem('theme');
+    if (savedTheme) {
+      applyTheme(savedTheme);
+    }
+  })();
+
+  // Primera corrida de la simulación
   document.getElementById('run').click();
-  </script>
-</body>
-</html>
+
+</script>
